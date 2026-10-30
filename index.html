@@ -425,9 +425,7 @@
     { id:"bathroom", code:"04", label:"Bathroom" },
     { id:"living",   code:"05", label:"Living"   },
     { id:"balcony",  code:"06", label:"Balcony"  },
-    { id:"entryway", code:"07", label:"Entryway" },
-    { id:"office",   code:"08", label:"Office"   },
-    { id:"general",  code:"09", label:"General"  }
+    { id:"general",  code:"07", label:"General"  }
   ];
 
   // Sourced items: full spec cards. Add more objects here (grouped by
@@ -448,13 +446,23 @@
           url:"https://www.castlery.com/au/products/owen-ii-2-seater-sofa?leg_color=walnut&material=basketweave_caramel",
           img:"owen-ii-sofa.jpg",
           note:null
-        }
-      ]
-    },
-    office: {
-      "Furniture": [
+        },
         {
-          code:"O-01",
+          code:"L-02",
+          name:"Micah Bamboo Foldable Dining Chair",
+          brand:"Temple & Webster",
+          material:"Bamboo frame, walnut finish · rattan cane seat & back",
+          dims:"Folds flat for storage",
+          price:94.95,
+          currency:"AUD",
+          url:"https://www.templeandwebster.com.au/Micah-Bamboo-Foldable-Dining-Chair-LVBS1337.html",
+          img:"micah-folding-chair.jpg",
+          note:"Black Friday sale price"
+        }
+      ],
+      "Office": [
+        {
+          code:"L-03",
           name:"Ludvig Office Chair",
           fulfills:"Office chair",
           brand:"Aurelia Home · Freedom",
@@ -473,7 +481,7 @@
   // Checklist items without a sourced product yet, grouped the same
   // way: room -> category -> [{name, note}]. Generated from the
   // household_checklist.xlsx "Get?" column marked x.
-  var PENDING_ROOMS = [{"id": "kitchen", "label": "Kitchen", "categories": {"Cookware": [{"name": "Frying pan (large)", "note": null, "est": 60}, {"name": "Saucepan (small)", "note": null, "est": 35}, {"name": "Saucepan (medium)", "note": null, "est": 45}, {"name": "Saucepan (large)", "note": null, "est": 60}, {"name": "Wok", "note": null, "est": 70}, {"name": "Casserole / Dutch oven", "note": null, "est": 150}], "Bakeware": [{"name": "Baking trays", "note": null, "est": 25}, {"name": "Mixing bowls", "note": null, "est": 40}], "Knives & Boards": [{"name": "Chef's knife", "note": null, "est": 90}, {"name": "Paring knife", "note": null, "est": 25}, {"name": "Bread knife", "note": null, "est": 35}, {"name": "Cutting board (wood)", "note": null, "est": 45}], "Utensils": [{"name": "Serving spoons", "note": null, "est": 15}, {"name": "Tongs", "note": null, "est": 15}, {"name": "Ladle", "note": null, "est": 12}, {"name": "Spatula / turner", "note": null, "est": 15}, {"name": "Vegetable peeler", "note": null, "est": 8}, {"name": "Box grater", "note": null, "est": 15}, {"name": "Can opener", "note": null, "est": 12}, {"name": "Bottle opener", "note": null, "est": 10}, {"name": "Measuring cups & spoons", "note": null, "est": 20}], "Cutlery (flatware)": [{"name": "Dinner knives", "note": null, "est": 40}, {"name": "Dinner forks", "note": null, "est": 40}, {"name": "Teaspoons", "note": null, "est": 25}, {"name": "Dessert spoons", "note": null, "est": 25}], "Crockery": [{"name": "Dinner plates", "note": null, "est": 60}, {"name": "Side plates", "note": null, "est": 40}, {"name": "Bowls (cereal/pasta)", "note": null, "est": 50}, {"name": "Mugs", "note": null, "est": 35}, {"name": "Teacups & saucers", "note": null, "est": 60}], "Glassware": [{"name": "Water glasses", "note": null, "est": 35}, {"name": "Red wine glasses", "note": null, "est": 45}, {"name": "Tumblers / highball glasses", "note": null, "est": 35}], "Storage": [{"name": "Food storage containers", "note": null, "est": 50}, {"name": "Glass storage jars", "note": null, "est": 30}, {"name": "Spice rack / jars", "note": null, "est": 40}], "Appliances (large)": [{"name": "Fridge / freezer", "note": null, "est": 1800}], "Appliances (small)": [{"name": "Kettle", "note": null, "est": 60}, {"name": "Toaster", "note": null, "est": 55}], "Linen & Small Items": [{"name": "Oven mitts", "note": null, "est": 20}, {"name": "Tea towels", "note": null, "est": 20}, {"name": "Dish cloths", "note": null, "est": 12}], "Waste": [{"name": "Kitchen bin", "note": null, "est": 60}], "Cleaning": [{"name": "Dish soap dispenser", "note": null, "est": 15}, {"name": "Sponge + holder", "note": null, "est": 12}, {"name": "Bin liners", "note": null, "est": 10}]}}, {"id": "dining", "label": "Dining", "categories": {"Tableware": [{"name": "Coasters", "note": null, "est": 20}]}}, {"id": "bedroom", "label": "Bedroom", "categories": {"Furniture": [{"name": "Bed frame", "note": "Custom maybe", "est": 900}, {"name": "Mattress", "note": null, "est": 900}, {"name": "Bedside tables", "note": null, "est": 150}, {"name": "Chest of drawers", "note": null, "est": 450}, {"name": "Wardrobe", "note": null, "est": 700}], "Lighting": [{"name": "Bedside lamp", "note": null, "est": 60}], "Bedding": [{"name": "Fitted sheet", "note": null, "est": 60}, {"name": "Flat sheet", "note": null, "est": 50}, {"name": "Pillowcases", "note": null, "est": 30}, {"name": "Doona / duvet", "note": null, "est": 150}, {"name": "Doona cover", "note": null, "est": 90}, {"name": "Mattress protector", "note": null, "est": 60}], "Soft Furnishings": [{"name": "Rug", "note": null, "est": 250}], "Storage": [{"name": "Under-bed storage", "note": null, "est": 45}, {"name": "Laundry hamper", "note": null, "est": 40}], "Decor": [{"name": "Wall art", "note": null, "est": 80}]}}, {"id": "bathroom", "label": "Bathroom", "categories": {"Fixtures & Accessories": [{"name": "Bath mat", "note": null, "est": 30}, {"name": "Soap dispenser", "note": null, "est": 20}], "Linen": [{"name": "Bath towels", "note": null, "est": 100}, {"name": "Hand towels", "note": null, "est": 40}, {"name": "Face washers", "note": null, "est": 25}]}}, {"id": "living", "label": "Living", "categories": {"Seating": [{"name": "Sofa", "note": null, "est": 1799}, {"name": "Occasional stool", "note": null, "est": 90}], "Tables": [{"name": "Coffee table", "note": null, "est": 350}, {"name": "Side / end table", "note": null, "est": 180}], "Storage & Media": [{"name": "TV unit / media console", "note": "Custom Made", "est": 1200}], "Lighting": [{"name": "Table lamp", "note": null, "est": 90}], "Soft Furnishings": [{"name": "Cushions", "note": "Just one", "est": 40}, {"name": "Throw blanket", "note": null, "est": 60}, {"name": "Curtains / blinds", "note": null, "est": 300}], "Entertainment": [{"name": "TV", "note": null, "est": 900}, {"name": "Soundbar / speakers", "note": null, "est": 250}], "Decor": [{"name": "Wall art / prints", "note": null, "est": 120}, {"name": "Indoor plants + planters", "note": null, "est": 60}]}}, {"id": "balcony", "label": "Balcony", "categories": {"Greenery": [{"name": "Planters / pots", "note": null, "est": 35}, {"name": "Outdoor plants", "note": null, "est": 25}], "Other": [{"name": "Outdoor lighting (string lights)", "note": null, "est": 30}]}}, {"id": "entryway", "label": "Entryway", "categories": {"Furniture": [{"name": "Shoe rack", "note": null, "est": 90}]}}, {"id": "office", "label": "Office", "categories": {"Furniture": [{"name": "Desk", "note": null, "est": 350}, {"name": "Office chair", "note": null, "est": 300}, {"name": "Bookshelf / filing storage", "note": null, "est": 200}], "Lighting": [{"name": "Desk lamp", "note": null, "est": 45}]}}, {"id": "general", "label": "General", "categories": {"Cleaning": [{"name": "Vacuum cleaner", "note": null, "est": 350}, {"name": "Broom + dustpan", "note": null, "est": 25}]}}]
+  var PENDING_ROOMS = [{"id": "kitchen", "label": "Kitchen", "categories": {"Cookware": [{"name": "Frying pan (large)", "note": null, "est": 60}, {"name": "Saucepan (small)", "note": null, "est": 35}, {"name": "Saucepan (medium)", "note": null, "est": 45}, {"name": "Saucepan (large)", "note": null, "est": 60}, {"name": "Wok", "note": null, "est": 70}, {"name": "Casserole / Dutch oven", "note": null, "est": 150}], "Bakeware": [{"name": "Baking trays", "note": null, "est": 25}, {"name": "Mixing bowls", "note": null, "est": 40}], "Knives & Boards": [{"name": "Chef's knife", "note": null, "est": 90}, {"name": "Paring knife", "note": null, "est": 25}, {"name": "Bread knife", "note": null, "est": 35}, {"name": "Cutting board (wood)", "note": null, "est": 45}], "Utensils": [{"name": "Serving spoons", "note": null, "est": 15}, {"name": "Tongs", "note": null, "est": 15}, {"name": "Ladle", "note": null, "est": 12}, {"name": "Spatula / turner", "note": null, "est": 15}, {"name": "Vegetable peeler", "note": null, "est": 8}, {"name": "Box grater", "note": null, "est": 15}, {"name": "Can opener", "note": null, "est": 12}, {"name": "Bottle opener", "note": null, "est": 10}, {"name": "Measuring cups & spoons", "note": null, "est": 20}], "Cutlery (flatware)": [{"name": "Dinner knives", "note": null, "est": 40}, {"name": "Dinner forks", "note": null, "est": 40}, {"name": "Teaspoons", "note": null, "est": 25}, {"name": "Dessert spoons", "note": null, "est": 25}], "Crockery": [{"name": "Dinner plates", "note": null, "est": 60}, {"name": "Side plates", "note": null, "est": 40}, {"name": "Bowls (cereal/pasta)", "note": null, "est": 50}, {"name": "Mugs", "note": null, "est": 35}, {"name": "Teacups & saucers", "note": null, "est": 60}], "Glassware": [{"name": "Water glasses", "note": null, "est": 35}, {"name": "Red wine glasses", "note": null, "est": 45}, {"name": "Tumblers / highball glasses", "note": null, "est": 35}], "Storage": [{"name": "Food storage containers", "note": null, "est": 50}, {"name": "Glass storage jars", "note": null, "est": 30}, {"name": "Spice rack / jars", "note": null, "est": 40}], "Appliances (large)": [{"name": "Fridge / freezer", "note": null, "est": 1800}], "Appliances (small)": [{"name": "Kettle", "note": null, "est": 60}, {"name": "Toaster", "note": null, "est": 55}], "Linen & Small Items": [{"name": "Oven mitts", "note": null, "est": 20}, {"name": "Tea towels", "note": null, "est": 20}, {"name": "Dish cloths", "note": null, "est": 12}], "Waste": [{"name": "Kitchen bin", "note": null, "est": 60}], "Cleaning": [{"name": "Dish soap dispenser", "note": null, "est": 15}, {"name": "Sponge + holder", "note": null, "est": 12}, {"name": "Bin liners", "note": null, "est": 10}]}}, {"id": "dining", "label": "Dining", "categories": {"Tableware": [{"name": "Coasters", "note": null, "est": 20}]}}, {"id": "bedroom", "label": "Bedroom", "categories": {"Furniture": [{"name": "Bed frame", "note": "Custom maybe", "est": 900}, {"name": "Mattress", "note": null, "est": 900}, {"name": "Bedside tables", "note": null, "est": 150}, {"name": "Chest of drawers", "note": null, "est": 450}, {"name": "Wardrobe", "note": null, "est": 700}], "Lighting": [{"name": "Bedside lamp", "note": null, "est": 60}], "Bedding": [{"name": "Fitted sheet", "note": null, "est": 60}, {"name": "Flat sheet", "note": null, "est": 50}, {"name": "Pillowcases", "note": null, "est": 30}, {"name": "Doona / duvet", "note": null, "est": 150}, {"name": "Doona cover", "note": null, "est": 90}, {"name": "Mattress protector", "note": null, "est": 60}], "Soft Furnishings": [{"name": "Rug", "note": null, "est": 250}], "Storage": [{"name": "Under-bed storage", "note": null, "est": 45}, {"name": "Laundry hamper", "note": null, "est": 40}], "Decor": [{"name": "Wall art", "note": null, "est": 80}]}}, {"id": "bathroom", "label": "Bathroom", "categories": {"Fixtures & Accessories": [{"name": "Bath mat", "note": null, "est": 30}, {"name": "Soap dispenser", "note": null, "est": 20}], "Linen": [{"name": "Bath towels", "note": null, "est": 100}, {"name": "Hand towels", "note": null, "est": 40}, {"name": "Face washers", "note": null, "est": 25}]}}, {"id": "living", "label": "Living", "categories": {"Seating": [{"name": "Sofa", "note": null, "est": 1799}, {"name": "Occasional stool", "note": null, "est": 90}], "Tables": [{"name": "Coffee table", "note": null, "est": 350}, {"name": "Side / end table", "note": null, "est": 180}], "Storage & Media": [{"name": "TV unit / media console", "note": "Custom Made", "est": 1200}], "Lighting": [{"name": "Table lamp", "note": null, "est": 90}], "Soft Furnishings": [{"name": "Cushions", "note": "Just one", "est": 40}, {"name": "Throw blanket", "note": null, "est": 60}, {"name": "Curtains / blinds", "note": null, "est": 300}], "Entertainment": [{"name": "TV", "note": null, "est": 900}, {"name": "Soundbar / speakers", "note": null, "est": 250}], "Decor": [{"name": "Wall art / prints", "note": null, "est": 120}, {"name": "Indoor plants + planters", "note": null, "est": 60}], "Office": [{"name": "Desk", "note": null, "est": 350}, {"name": "Office chair", "note": null, "est": 300}, {"name": "Bookshelf / filing storage", "note": null, "est": 200}, {"name": "Desk lamp", "note": null, "est": 45}], "Entryway": [{"name": "Shoe rack", "note": null, "est": 90}]}}, {"id": "balcony", "label": "Balcony", "categories": {"Greenery": [{"name": "Planters / pots", "note": null, "est": 35}, {"name": "Outdoor plants", "note": null, "est": 25}], "Other": [{"name": "Outdoor lighting (string lights)", "note": null, "est": 30}]}}, {"id": "general", "label": "General", "categories": {"Cleaning": [{"name": "Vacuum cleaner", "note": null, "est": 350}, {"name": "Broom + dustpan", "note": null, "est": 25}]}}]
 ;
 
   // Moodboard pins: images/screenshots with an optional caption, source
@@ -495,6 +503,7 @@
   ];
 
   var fmt = new Intl.NumberFormat("en-AU", { style:"currency", currency:"AUD", maximumFractionDigits:0 });
+  var fmtCents = new Intl.NumberFormat("en-AU", { style:"currency", currency:"AUD" });
 
   function el(tag, cls, html){
     var e = document.createElement(tag);
@@ -533,7 +542,15 @@
   // placeholder ticked before its product is found stays ticked after.
   var BOUGHT_KEY = "new-home-schedule:bought";
   var bought = {};
-  try { (JSON.parse(localStorage.getItem(BOUGHT_KEY)) || []).forEach(function(k){ bought[k] = true; }); } catch(e){}
+  // Office and Entryway were folded into Living; old ticks are remapped.
+  var MOVED = { "office|Furniture|":"living|Office|", "office|Lighting|":"living|Office|", "entryway|Furniture|":"living|Entryway|" };
+  try {
+    (JSON.parse(localStorage.getItem(BOUGHT_KEY)) || []).forEach(function(k){
+      Object.keys(MOVED).forEach(function(from){ if (k.indexOf(from) === 0) k = MOVED[from] + k.slice(from.length); });
+      bought[k] = true;
+    });
+  } catch(e){}
+  saveBought();
 
   function itemKey(roomId, cat, name){
     return [roomId, cat, name.trim().toLowerCase()].join("|");
@@ -596,7 +613,7 @@
     }
     body.appendChild(el("span", "spec", item.dims));
     var foot = el("div", "foot");
-    foot.appendChild(el("span", "price", fmt.format(item.price)));
+    foot.appendChild(el("span", "price", item.price % 1 ? fmtCents.format(item.price) : fmt.format(item.price)));
     foot.appendChild(el("span", "view", "View product →"));
     body.appendChild(foot);
     card.appendChild(body);
@@ -629,11 +646,10 @@
     var sourcedCats = ITEMS[room.id] || {};
     var pendingCats = pendingData ? pendingData.categories : {};
 
-    // union of category names, sourced first in their own order, then
-    // any pending-only category, each in checklist order.
-    var catOrder = [];
+    // union of category names in checklist order, then any category
+    // that only has sourced items.
+    var catOrder = Object.keys(pendingCats);
     Object.keys(sourcedCats).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
-    Object.keys(pendingCats).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
 
     var sourcedCount = roomItemCount(room.id);
     var pendingCount = roomPendingCount(pendingData);
