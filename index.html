@@ -180,19 +180,44 @@
     width:32px; height:32px; display:flex; align-items:center; justify-content:center;
     cursor:pointer; -webkit-tap-highlight-color:transparent;
   }
-  .buy input{
+  .buy input, .lead-pick input{
     -webkit-appearance:none; appearance:none; margin:0; cursor:pointer;
     width:20px; height:20px; border:1.5px solid var(--ink-45); border-radius:3px;
     background:var(--surface); display:grid; place-content:center;
   }
-  .buy input::before{
+  .buy input::before, .lead-pick input::before{
     content:""; width:10px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff;
     transform:translateY(-1px) rotate(-45deg); opacity:0;
   }
-  .buy input:hover{border-color:var(--ink)}
-  .buy input:checked{background:var(--avocado); border-color:var(--avocado)}
-  .buy input:checked::before{opacity:1}
-  .buy input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .buy input:hover, .lead-pick input:hover{border-color:var(--ink)}
+  .buy input:checked, .lead-pick input:checked{background:var(--avocado); border-color:var(--avocado)}
+  .buy input:checked::before, .lead-pick input:checked::before{opacity:1}
+  .buy input:focus-visible, .lead-pick input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ---- Multi-option slots ---- */
+  .opt-pill{
+    position:absolute; bottom:10px; left:10px; font-family:var(--font-mono); font-size:10px;
+    letter-spacing:.06em; text-transform:uppercase; background:var(--ink); color:#fff;
+    padding:3px 7px; border-radius:2px;
+  }
+  #options{display:none}
+  #view-items.show-options #options{display:block}
+  #view-items.show-options #rooms,
+  #view-items.show-options .toolbar{display:none}
+  .opt-back{
+    display:inline-block; margin:24px 0 14px; font-family:var(--font-mono); font-size:11px;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--accent); text-decoration:none;
+  }
+  .opt-back:hover{text-decoration:underline}
+  .card.lead{border-color:var(--avocado); box-shadow:0 0 0 1px var(--avocado)}
+  .lead-pick{
+    position:relative; z-index:2; display:flex; align-items:center; gap:9px; cursor:pointer;
+    margin-top:6px; padding-top:10px; border-top:1px solid var(--line);
+    font-family:var(--font-sans); font-weight:600; font-size:12px; color:var(--ink-70);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .card.lead .lead-pick{color:var(--avocado); cursor:default}
+  .lead-pick input:disabled{cursor:default}
   .card.bought > :not(.buy){opacity:.45}
   .card.bought img{filter:grayscale(1)}
   .card.bought .name, .card.bought .pname{text-decoration:line-through}
@@ -384,6 +409,7 @@
     </div>
 
     <div id="rooms"></div>
+    <div id="options"></div>
 
     <details class="how">
       <summary>How this list works</summary>
@@ -431,6 +457,10 @@
   // Sourced items: full spec cards. Add more objects here (grouped by
   // room -> category) as products get confirmed — the matching
   // checklist placeholder (same room/category/name) drops out on its own.
+  // Several items with the same "fulfills" are options for one slot: the
+  // room shows the leading option, and clicking it opens a page comparing
+  // them all. The first listed leads unless one has lead:true or the
+  // viewer picks another.
   var ITEMS = {
     living: {
       "Seating": [
@@ -473,6 +503,19 @@
           url:"https://www.freedom.com.au/product/10010695",
           img:"ludvig-office-chair.jpg",
           note:"Swap the castors for stem-mount glides (~10/11mm grip stem, ~$20) + felt pads — floor-safe and keeps the tilt/height adjustment"
+        },
+        {
+          code:"L-03",
+          name:"Bentwood High Back Executive Office Chair",
+          fulfills:"Office chair",
+          brand:"Temple & Webster",
+          material:"Faux leather, Black · walnut bentwood shell",
+          dims:"High back · swivel + height adjust · chrome 5-star base on castors",
+          price:399,
+          currency:"AUD",
+          url:"https://www.templeandwebster.com.au/Bentwood-High-Back-Executive-Faux-Leather-Office-Chair-TMPL3848.html",
+          img:"bentwood-office-chair.jpg",
+          note:"Black Friday sale price"
         }
       ]
     }
@@ -518,10 +561,38 @@
     return list.map(function(i){ return (i.fulfills || i.name).trim().toLowerCase(); });
   }
 
+  // Group a category's sourced items into slots: {name, options[]}.
+  function slotsFor(roomId, cat){
+    var out = [], byName = {};
+    ((ITEMS[roomId] || {})[cat] || []).forEach(function(item){
+      var name = item.fulfills || item.name;
+      var k = name.trim().toLowerCase();
+      if (!byName[k]){ byName[k] = { name:name, options:[] }; out.push(byName[k]); }
+      byName[k].options.push(item);
+    });
+    return out;
+  }
+
+  // Leading option picks live in localStorage, keyed like bought ticks.
+  var LEAD_KEY = "new-home-schedule:lead";
+  var leads = {};
+  try { leads = JSON.parse(localStorage.getItem(LEAD_KEY)) || {}; } catch(e){}
+
+  function leadOf(key, slot){
+    var picked = slot.options.filter(function(o){ return o.name === leads[key]; })[0];
+    return picked || slot.options.filter(function(o){ return o.lead; })[0] || slot.options[0];
+  }
+
+  function setLead(key, name){
+    leads[key] = name;
+    try { localStorage.setItem(LEAD_KEY, JSON.stringify(leads)); } catch(e){}
+  }
+
+  function priceText(p){ return p % 1 ? fmtCents.format(p) : fmt.format(p); }
+
   function roomItemCount(roomId){
     var n = 0;
-    var cats = ITEMS[roomId] || {};
-    Object.keys(cats).forEach(function(c){ n += cats[c].length; });
+    Object.keys(ITEMS[roomId] || {}).forEach(function(c){ n += slotsFor(roomId, c).length; });
     return n;
   }
 
@@ -588,11 +659,15 @@
     });
   }
 
-  function buildCard(item, key){
+  // opts (optional): {href, pill, view, tag} override the product link
+  // for multi-option slots and the options page.
+  function buildCard(item, key, opts){
+    opts = opts || {};
     var card = el("div", "card");
 
     var shot = el("div", "shot");
-    shot.appendChild(el("span", "tag", item.code));
+    shot.appendChild(el("span", "tag", opts.tag || item.code));
+    if (opts.pill) shot.appendChild(el("span", "opt-pill", opts.pill));
     var img = document.createElement("img");
     img.src = item.img;
     img.alt = item.name;
@@ -602,9 +677,11 @@
 
     var body = el("div", "body");
     var link = el("a", "name", item.name);
-    link.href = item.url;
-    link.target = "_blank";
-    link.rel = "noopener";
+    link.href = opts.href || item.url;
+    if (!opts.href){
+      link.target = "_blank";
+      link.rel = "noopener";
+    }
     body.appendChild(link);
     var materialLine = item.brand ? (item.brand + " — " + item.material) : item.material;
     body.appendChild(el("span", "material", materialLine));
@@ -613,11 +690,11 @@
     }
     body.appendChild(el("span", "spec", item.dims));
     var foot = el("div", "foot");
-    foot.appendChild(el("span", "price", item.price % 1 ? fmtCents.format(item.price) : fmt.format(item.price)));
-    foot.appendChild(el("span", "view", "View product →"));
+    foot.appendChild(el("span", "price", priceText(item.price)));
+    foot.appendChild(el("span", "view", opts.view || "View product →"));
     body.appendChild(foot);
     card.appendChild(body);
-    addBuyBox(card, key, item.name);
+    if (key) addBuyBox(card, key, item.name);
 
     return card;
   }
@@ -665,8 +742,14 @@
     catOrder.forEach(function(cat){
       section.appendChild(el("div", "cat-label", cat));
       var g = el("div", "grid");
-      (sourcedCats[cat] || []).forEach(function(item){
-        g.appendChild(buildCard(item, itemKey(room.id, cat, item.fulfills || item.name)));
+      slotsFor(room.id, cat).forEach(function(slot){
+        var key = itemKey(room.id, cat, slot.name);
+        var n = slot.options.length;
+        g.appendChild(buildCard(leadOf(key, slot), key, n > 1 ? {
+          href: "#options/" + encodeURIComponent(key),
+          pill: n + " options",
+          view: "Compare " + n + " options →"
+        } : null));
       });
       var done = sourcedNames(room.id, cat);
       (pendingCats[cat] || []).forEach(function(it){
@@ -687,9 +770,10 @@
       sourced += roomItemCount(r.id);
       all += roomItemCount(r.id) + roomPendingCount(pd);
 
-      var cats = ITEMS[r.id] || {};
-      Object.keys(cats).forEach(function(c){
-        cats[c].forEach(function(i){ confirmed += (i.price || 0); });
+      Object.keys(ITEMS[r.id] || {}).forEach(function(c){
+        slotsFor(r.id, c).forEach(function(slot){
+          confirmed += leadOf(itemKey(r.id, c, slot.name), slot).price || 0;
+        });
       });
 
       if (pd){
@@ -717,9 +801,11 @@
     try { localStorage.setItem("new-home-schedule:tab", roomId); } catch(e){}
   }
 
-  function init(){
+  function render(){
     var tabRow = document.getElementById("tab-row");
     var roomsWrap = document.getElementById("rooms");
+    tabRow.innerHTML = "";
+    roomsWrap.innerHTML = "";
 
     ROOMS.forEach(function(r){
       var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
@@ -735,8 +821,8 @@
         '<span>' + r.label + '</span>' +
         '<span class="count">(' + sourcedCount + '/' + totalCount + ')</span>';
       btn.addEventListener("click", function(){
-        setActive(r.id);
         location.hash = r.id;
+        route();
       });
       tabRow.appendChild(btn);
 
@@ -750,21 +836,77 @@
       fmt.format(totals.confirmed) +
       ' <span class="est" id="estimate-line">+ ~' + fmt.format(totals.estimate) + ' est.</span>';
     updateBoughtStats();
+  }
 
+  // Options page for one slot, reached at #options/<room|category|slot>.
+  function renderOptions(key){
+    var parts = key.split("|");
+    var room = ROOMS.filter(function(r){ return r.id === parts[0]; })[0];
+    var slot = room && slotsFor(room.id, parts[1]).filter(function(sl){
+      return itemKey(room.id, parts[1], sl.name) === key;
+    })[0];
+    if (!slot) return null;
+
+    var wrap = document.getElementById("options");
+    wrap.innerHTML = "";
+    var back = el("a", "opt-back", "← Back to " + room.label);
+    back.href = "#" + room.id;
+    wrap.appendChild(back);
+
+    var head = el("div", "room-head");
+    head.appendChild(el("h2", null, slot.name));
+    head.appendChild(el("span", "room-stat", slot.options.length + " options · " + room.label + " › " + parts[1]));
+    wrap.appendChild(head);
+
+    var lead = leadOf(key, slot);
+    var g = el("div", "grid");
+    slot.options.forEach(function(item, i){
+      var isLead = item === lead;
+      var card = buildCard(item, null, { tag: "Option " + String.fromCharCode(65 + i) });
+      if (isLead) card.classList.add("lead");
+
+      var pick = el("label", "lead-pick");
+      var box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = isLead;
+      box.disabled = isLead;
+      box.addEventListener("change", function(){
+        setLead(key, item.name);
+        render();
+        renderOptions(key);
+      });
+      pick.appendChild(box);
+      pick.appendChild(el("span", null, isLead ? "Leading option" : "Make leading option"));
+      card.querySelector(".body").appendChild(pick);
+      g.appendChild(card);
+    });
+    wrap.appendChild(g);
+    return room.id;
+  }
+
+  function route(){
+    var hash = (location.hash || "").replace("#", "");
+    var view = document.getElementById("view-items");
+    if (hash.indexOf("options/") === 0){
+      var roomId = renderOptions(decodeURIComponent(hash.slice(8)));
+      if (roomId){
+        setPage("items");
+        view.classList.add("show-options");
+        setActive(roomId);
+        window.scrollTo(0, 0);
+        return;
+      }
+    }
+    view.classList.remove("show-options");
     var initial = "kitchen";
-    var fromHash = (location.hash || "").replace("#", "");
     var stored = null;
     try { stored = localStorage.getItem("new-home-schedule:tab"); } catch(e){}
-    if (ROOMS.some(function(r){ return r.id === fromHash; })) initial = fromHash;
+    if (ROOMS.some(function(r){ return r.id === hash; })) initial = hash;
     else if (ROOMS.some(function(r){ return r.id === stored; })) initial = stored;
-
     setActive(initial);
   }
 
-  window.addEventListener("hashchange", function(){
-    var id = (location.hash || "").replace("#", "");
-    if (ROOMS.some(function(r){ return r.id === id; })) setActive(id);
-  });
+  window.addEventListener("hashchange", route);
 
   function buildMoodCard(pin){
     var fig = el("figure", pin.tall ? "tall" : null);
@@ -847,6 +989,7 @@
   try { storedView = localStorage.getItem("new-home-schedule:view") || "grid"; } catch(e){}
   setView(storedView);
 
-  init();
+  render();
+  route();
 })();
 </script>
