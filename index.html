@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<title>New Home Schedule</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: sticky header + room-tab nav (mirrors the style guide's
+     numbered section bar); every room is a card grid (or list) on the
+     warm beige ground from the style guide. This page commits to that
+     one look on purpose — it ignores system dark mode so the beige
+     always shows, rather than switching to a dark palette per viewer. */
+  :root{
+    --ink:#2B2620;
+    --ink-70: rgba(43,38,32,.68);
+    --ink-45: rgba(43,38,32,.42);
+    --ink-15: rgba(43,38,32,.12);
+    --ketchup:#BD533B;
+    --avocado:#8C8740;
+    --bg:#EFEDEA;
+    --surface:#FEFEFE;
+    --panel:#E4E0D8;
+    --line:var(--ink-15);
+    --accent:var(--ketchup);
+    --accent-2:var(--avocado);
+    --font-display:'Lora', Georgia, 'Times New Roman', serif;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    color-scheme: light;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--panel);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px);
+    z-index:20; background:var(--bg);
+  }
+  a{color:inherit}
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding-left:max(20px, env(safe-area-inset-left,0px));
+    padding-right:max(20px, env(safe-area-inset-right,0px));
+  }
+
+  /* ---- Header ---- */
+  header.top{
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+    padding-block: calc(18px + env(safe-area-inset-top,0px)) 20px;
+  }
+  header.top .wrap{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap}
+  .brand-eyebrow{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:700; font-size:clamp(28px,4vw,42px);
+    margin:0; letter-spacing:0; text-wrap:balance;
+  }
+  .sub{
+    font-family:var(--font-display); font-style:italic; font-size:16px;
+    color:var(--ink-70); margin:6px 0 0;
+  }
+  .totals{
+    font-family:var(--font-mono); font-size:12px; color:var(--ink-70);
+    text-align:right; line-height:1.7; white-space:nowrap;
+  }
+  .totals b{font-size:20px; color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; display:block}
+  .totals .est{font-size:13px; font-weight:500; color:var(--ink-45)}
+
+  /* ---- Page switch (Items / Moodboard) ---- */
+  nav.pages{
+    background:var(--ink);
+  }
+  nav.pages .wrap{display:flex; gap:0; overflow-x:auto}
+  .page-tab{
+    font-family:var(--font-mono); font-weight:500; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    background:none; border:none; color:rgba(255,255,255,.55); cursor:pointer;
+    padding:11px 18px; border-bottom:2px solid transparent; white-space:nowrap;
+  }
+  .page-tab:hover{color:rgba(255,255,255,.85)}
+  .page-tab[aria-selected="true"]{color:#fff; border-bottom-color:var(--accent)}
+
+  /* ---- Tabs ---- */
+  nav.tabs{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:10;
+    background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  nav.tabs .wrap{display:flex; gap:2px; overflow-x:auto; padding-top:0; padding-bottom:0}
+  .tab{
+    font-family:var(--font-sans); font-weight:600; font-size:13px; letter-spacing:.04em;
+    background:none; border:none; color:var(--ink-70); cursor:pointer;
+    padding:16px 16px 13px; border-bottom:3px solid transparent;
+    display:flex; align-items:baseline; gap:7px; white-space:nowrap;
+  }
+  .tab .code{font-family:var(--font-mono); font-size:11px; color:var(--ink-45)}
+  .tab .count{font-family:var(--font-mono); font-size:11px; color:var(--ink-45)}
+  .tab:hover{color:var(--ink)}
+  .tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+  .tab[aria-selected="true"] .code{color:var(--accent)}
+
+  /* ---- View toggle ---- */
+  .toolbar{display:flex; justify-content:flex-end; padding-top:20px}
+  .view-switch{
+    display:inline-flex; border:1px solid var(--line); border-radius:3px; overflow:hidden;
+  }
+  .view-btn{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--surface); border:none; color:var(--ink-70); cursor:pointer;
+    padding:8px 16px;
+  }
+  .view-btn + .view-btn{border-left:1px solid var(--line)}
+  .view-btn:hover{color:var(--ink)}
+  .view-btn[aria-pressed="true"]{background:var(--ink); color:var(--surface)}
+
+  /* ---- Room panel ---- */
+  main{padding-block:0 60px}
+  .room{display:none}
+  .room.active{display:block}
+  .room-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    margin-bottom:22px; flex-wrap:wrap;
+  }
+  .room-head h2{
+    font-family:var(--font-display); font-weight:600; font-size:26px; margin:0;
+  }
+  .room-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-45)}
+
+  .cat-label{
+    font-family:var(--font-sans); font-weight:600; font-size:11px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent-2);
+    border-left:2px solid var(--accent-2); padding-left:9px;
+    margin:30px 0 14px;
+  }
+  .cat-label:first-of-type{margin-top:0}
+
+  #rooms{padding-top:28px}
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:16px;
+  }
+
+  /* ---- List view ---- */
+  #rooms.list-view .grid{grid-template-columns:1fr; gap:10px}
+  #rooms.list-view .card{flex-direction:row}
+  #rooms.list-view .card .shot{
+    aspect-ratio:auto; width:110px; flex:0 0 110px;
+  }
+  #rooms.list-view .card .body{
+    padding:10px 16px; gap:4px;
+  }
+  #rooms.list-view .card .spec{border-top:none; margin-top:0; padding-top:0}
+  #rooms.list-view .card.placeholder .shot{
+    flex-direction:row; align-items:center; justify-content:space-between;
+    width:auto; flex:1; min-height:0; padding:14px 18px; gap:16px;
+  }
+  #rooms.list-view .card.placeholder .pname{text-align:left; flex:1}
+  #rooms.list-view .card.placeholder .pnote,
+  #rooms.list-view .card.placeholder .pest{white-space:nowrap}
+  #rooms.list-view .card.placeholder .label{margin-top:0; padding-top:0}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:3px;
+    overflow:hidden; display:flex; flex-direction:column; min-width:0;
+  }
+  .card .shot{
+    aspect-ratio:4/3; background:var(--panel); display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .card .shot img{width:100%; height:100%; object-fit:contain; padding:10px; display:block}
+  .tag{
+    position:absolute; top:10px; left:10px; font-family:var(--font-mono); font-size:10px;
+    letter-spacing:.06em; background:var(--accent); color:#fff; padding:3px 7px; border-radius:2px;
+  }
+  .card .body{padding:13px 14px 15px; display:flex; flex-direction:column; gap:7px; flex:1}
+  .card .name{
+    font-family:var(--font-display); font-weight:600; font-size:15.5px; line-height:1.3;
+    text-decoration:none; color:var(--ink);
+  }
+  .card .name:hover{color:var(--accent)}
+  .card .material{font-size:11.5px; color:var(--ink-70); line-height:1.4}
+  .card .spec{
+    font-family:var(--font-mono); font-size:11px; color:var(--ink-45);
+    letter-spacing:.01em; border-top:1px solid var(--line); margin-top:auto;
+    padding-top:9px;
+  }
+  .card .foot{display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:2px}
+  .price{font-family:var(--font-sans); font-weight:700; font-size:15.5px; font-variant-numeric:tabular-nums}
+  .view{
+    font-family:var(--font-sans); font-weight:600; font-size:11px; letter-spacing:.03em;
+    color:var(--accent); text-decoration:none; white-space:nowrap;
+  }
+  .view:hover{text-decoration:underline}
+
+  .card.placeholder{
+    border:1.5px dashed var(--ink-45); background:transparent;
+  }
+  .card.placeholder .shot{
+    background:transparent; aspect-ratio:auto; flex:1; min-height:92px;
+    flex-direction:column; gap:3px; color:var(--ink-45); padding:14px 12px;
+  }
+  .card.placeholder .pname{
+    font-family:var(--font-display); font-weight:600; font-size:14.5px; color:var(--ink);
+    text-align:center; line-height:1.3;
+  }
+  .card.placeholder .pnote{
+    font-family:var(--font-sans); font-size:11px; color:var(--accent-2); text-align:center;
+  }
+  .card.placeholder .pest{
+    font-family:var(--font-mono); font-size:12.5px; color:var(--ink-70);
+    font-variant-numeric:tabular-nums; margin-top:2px;
+  }
+  .card.placeholder .label{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:.1em;
+    color:var(--ink-45); text-transform:uppercase; margin-top:auto; padding-top:8px;
+  }
+
+  /* ---- Page switch (Items / Moodboard) ---- */
+  #view-items{display:none}
+  #view-items.active{display:block}
+  #view-moodboard{display:none}
+  #view-moodboard.active{display:block}
+  .mood-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    margin:28px 0 20px; flex-wrap:wrap;
+  }
+  .mood-head h2{font-family:var(--font-display); font-weight:600; font-size:26px; margin:0}
+  .mood-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-45)}
+  .mood-grid{
+    columns:4 220px; column-gap:14px;
+  }
+  .mood-grid figure{
+    break-inside:avoid; margin:0 0 14px; background:var(--surface); border:1px solid var(--line);
+    border-radius:3px; overflow:hidden;
+  }
+  .mood-grid img{display:block; width:100%; height:auto}
+  .mood-grid figcaption{
+    padding:9px 11px 11px; font-family:var(--font-sans); font-size:11.5px; color:var(--ink-70); line-height:1.4;
+  }
+  .mood-grid figcaption b{display:block; font-family:var(--font-display); font-size:13.5px; font-weight:600; color:var(--ink); margin-bottom:2px}
+  .mood-grid figcaption a{color:var(--accent); font-family:var(--font-mono); font-size:10.5px; text-decoration:none}
+  .mood-grid figcaption a:hover{text-decoration:underline}
+  .mood-empty{
+    border:1.5px dashed var(--ink-45); border-radius:3px; padding:50px 24px; text-align:center;
+    color:var(--ink-45); margin-top:4px;
+  }
+  .mood-empty p{font-family:var(--font-sans); font-size:13.5px; line-height:1.6; max-width:48ch; margin:0 auto}
+  .mood-empty p + p{margin-top:8px; font-size:12px}
+
+  @media (max-width:900px){ .mood-grid{columns:3 180px} }
+  @media (max-width:600px){ .mood-grid{columns:2 150px} }
+
+  details.how{
+    margin-top:44px; border-top:1px solid var(--line); padding-top:18px;
+  }
+  details.how summary{
+    cursor:pointer; font-family:var(--font-sans); font-weight:600; font-size:12.5px;
+    letter-spacing:.04em; color:var(--ink-70); list-style:none;
+  }
+  details.how summary::-webkit-details-marker{display:none}
+  details.how summary::before{content:"— "}
+  details.how p{font-size:13px; color:var(--ink-70); line-height:1.6; max-width:62ch; margin:10px 0 0}
+
+  @media (max-width:480px){
+    header.top .wrap{flex-direction:column; align-items:flex-start; gap:10px}
+    .totals{text-align:left}
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<header class="top">
+  <div class="wrap">
+    <div>
+      <p class="brand-eyebrow">Fit-Out Schedule</p>
+      <h1>New Home</h1>
+      <p class="sub">Furniture &amp; equipment, room by room</p>
+    </div>
+    <div class="totals">
+      <span id="item-count">1 of 91 sourced</span>
+      <b id="running-total">$1,799 <span class="est" id="estimate-line">+ ~$12,816 est.</span></b>
+    </div>
+  </div>
+</header>
+
+<nav class="pages" aria-label="Page">
+  <div class="wrap">
+    <button type="button" class="page-tab" id="page-items" aria-selected="true">Items</button>
+    <button type="button" class="page-tab" id="page-moodboard" aria-selected="false">Moodboard</button>
+  </div>
+</nav>
+
+<div id="view-items" class="active">
+  <nav class="tabs" role="tablist" aria-label="Rooms">
+    <div class="wrap" id="tab-row"></div>
+  </nav>
+
+  <main class="wrap">
+    <div class="toolbar">
+      <div class="view-switch" role="group" aria-label="View">
+        <button type="button" class="view-btn" id="view-grid" aria-pressed="true">Grid</button>
+        <button type="button" class="view-btn" id="view-list" aria-pressed="false">List</button>
+      </div>
+    </div>
+
+    <div id="rooms"></div>
+
+    <details class="how">
+      <summary>How this list works</summary>
+      <p>
+        Every room below comes from the household checklist — ticked items that don't have a product
+        yet sit as named, dashed placeholders, each with a rough budget estimate. Send through a link
+        for any of them (or more rows from the spreadsheet) and it gets swapped in as a full card with
+        image, dimensions and a confirmed price. Estimates are rough mid-range AUD figures for planning,
+        not quotes.
+      </p>
+    </details>
+  </main>
+</div>
+
+<div id="view-moodboard">
+  <main class="wrap">
+    <div class="mood-head">
+      <h2>Moodboard</h2>
+      <span class="mood-stat" id="mood-stat">0 pins</span>
+    </div>
+    <div id="mood-grid" class="mood-grid"></div>
+    <div id="mood-empty" class="mood-empty">
+      <p>Nothing pinned yet.</p>
+      <p>Send through photos, screenshots or links of looks, palettes and rooms you like and they'll get pinned here.</p>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Room order: the four named in the brief first, then the rest of
+  // the rooms that turned up checked items in the spreadsheet.
+  var ROOMS = [
+    { id:"kitchen",  code:"01", label:"Kitchen"  },
+    { id:"dining",   code:"02", label:"Dining"   },
+    { id:"bedroom",  code:"03", label:"Bedroom"  },
+    { id:"bathroom", code:"04", label:"Bathroom" },
+    { id:"living",   code:"05", label:"Living"   },
+    { id:"balcony",  code:"06", label:"Balcony"  },
+    { id:"entryway", code:"07", label:"Entryway" },
+    { id:"office",   code:"08", label:"Office"   },
+    { id:"general",  code:"09", label:"General"  }
+  ];
+
+  // Sourced items: full spec cards. Add more objects here (grouped by
+  // room -> category) as products get confirmed — the matching
+  // checklist placeholder (same room/category/name) drops out on its own.
+  var ITEMS = {
+    living: {
+      "Seating": [
+        {
+          code:"L-01",
+          name:"Owen II 2 Seater Sofa",
+          fulfills:"Sofa",
+          brand:"Castlery",
+          material:"Basketweave, Caramel · Walnut legs",
+          dims:"W180 × D99.5 × H79 cm · seat H47 cm",
+          price:1799,
+          currency:"AUD",
+          url:"https://www.castlery.com/au/products/owen-ii-2-seater-sofa?leg_color=walnut&material=basketweave_caramel",
+          img:"owen-ii-sofa.jpg",
+          note:null
+        }
+      ]
+    },
+    office: {
+      "Furniture": [
+        {
+          code:"O-01",
+          name:"Ludvig Office Chair",
+          fulfills:"Office chair",
+          brand:"Aurelia Home · Freedom",
+          material:"Polyester, Wine",
+          dims:"Swivel, tilt + height adjust · stock 5-star base on castors",
+          price:319,
+          currency:"AUD",
+          url:"https://www.freedom.com.au/product/10010695",
+          img:"ludvig-office-chair.jpg",
+          note:"Swap the castors for stem-mount glides (~10/11mm grip stem, ~$20) + felt pads — floor-safe and keeps the tilt/height adjustment"
+        }
+      ]
+    }
+  };
+
+  // Checklist items without a sourced product yet, grouped the same
+  // way: room -> category -> [{name, note}]. Generated from the
+  // household_checklist.xlsx "Get?" column marked x.
+  var PENDING_ROOMS = [{"id": "kitchen", "label": "Kitchen", "categories": {"Cookware": [{"name": "Frying pan (large)", "note": null, "est": 60}, {"name": "Saucepan (small)", "note": null, "est": 35}, {"name": "Saucepan (medium)", "note": null, "est": 45}, {"name": "Saucepan (large)", "note": null, "est": 60}, {"name": "Wok", "note": null, "est": 70}, {"name": "Casserole / Dutch oven", "note": null, "est": 150}], "Bakeware": [{"name": "Baking trays", "note": null, "est": 25}, {"name": "Mixing bowls", "note": null, "est": 40}], "Knives & Boards": [{"name": "Chef's knife", "note": null, "est": 90}, {"name": "Paring knife", "note": null, "est": 25}, {"name": "Bread knife", "note": null, "est": 35}, {"name": "Cutting board (wood)", "note": null, "est": 45}], "Utensils": [{"name": "Serving spoons", "note": null, "est": 15}, {"name": "Tongs", "note": null, "est": 15}, {"name": "Ladle", "note": null, "est": 12}, {"name": "Spatula / turner", "note": null, "est": 15}, {"name": "Vegetable peeler", "note": null, "est": 8}, {"name": "Box grater", "note": null, "est": 15}, {"name": "Can opener", "note": null, "est": 12}, {"name": "Bottle opener", "note": null, "est": 10}, {"name": "Measuring cups & spoons", "note": null, "est": 20}], "Cutlery (flatware)": [{"name": "Dinner knives", "note": null, "est": 40}, {"name": "Dinner forks", "note": null, "est": 40}, {"name": "Teaspoons", "note": null, "est": 25}, {"name": "Dessert spoons", "note": null, "est": 25}], "Crockery": [{"name": "Dinner plates", "note": null, "est": 60}, {"name": "Side plates", "note": null, "est": 40}, {"name": "Bowls (cereal/pasta)", "note": null, "est": 50}, {"name": "Mugs", "note": null, "est": 35}, {"name": "Teacups & saucers", "note": null, "est": 60}], "Glassware": [{"name": "Water glasses", "note": null, "est": 35}, {"name": "Red wine glasses", "note": null, "est": 45}, {"name": "Tumblers / highball glasses", "note": null, "est": 35}], "Storage": [{"name": "Food storage containers", "note": null, "est": 50}, {"name": "Glass storage jars", "note": null, "est": 30}, {"name": "Spice rack / jars", "note": null, "est": 40}], "Appliances (large)": [{"name": "Fridge / freezer", "note": null, "est": 1800}], "Appliances (small)": [{"name": "Kettle", "note": null, "est": 60}, {"name": "Toaster", "note": null, "est": 55}], "Linen & Small Items": [{"name": "Oven mitts", "note": null, "est": 20}, {"name": "Tea towels", "note": null, "est": 20}, {"name": "Dish cloths", "note": null, "est": 12}], "Waste": [{"name": "Kitchen bin", "note": null, "est": 60}], "Cleaning": [{"name": "Dish soap dispenser", "note": null, "est": 15}, {"name": "Sponge + holder", "note": null, "est": 12}, {"name": "Bin liners", "note": null, "est": 10}]}}, {"id": "dining", "label": "Dining", "categories": {"Tableware": [{"name": "Coasters", "note": null, "est": 20}]}}, {"id": "bedroom", "label": "Bedroom", "categories": {"Furniture": [{"name": "Bed frame", "note": "Custom maybe", "est": 900}, {"name": "Mattress", "note": null, "est": 900}, {"name": "Bedside tables", "note": null, "est": 150}, {"name": "Chest of drawers", "note": null, "est": 450}, {"name": "Wardrobe", "note": null, "est": 700}], "Lighting": [{"name": "Bedside lamp", "note": null, "est": 60}], "Bedding": [{"name": "Fitted sheet", "note": null, "est": 60}, {"name": "Flat sheet", "note": null, "est": 50}, {"name": "Pillowcases", "note": null, "est": 30}, {"name": "Doona / duvet", "note": null, "est": 150}, {"name": "Doona cover", "note": null, "est": 90}, {"name": "Mattress protector", "note": null, "est": 60}], "Soft Furnishings": [{"name": "Rug", "note": null, "est": 250}], "Storage": [{"name": "Under-bed storage", "note": null, "est": 45}, {"name": "Laundry hamper", "note": null, "est": 40}], "Decor": [{"name": "Wall art", "note": null, "est": 80}]}}, {"id": "bathroom", "label": "Bathroom", "categories": {"Fixtures & Accessories": [{"name": "Bath mat", "note": null, "est": 30}, {"name": "Soap dispenser", "note": null, "est": 20}], "Linen": [{"name": "Bath towels", "note": null, "est": 100}, {"name": "Hand towels", "note": null, "est": 40}, {"name": "Face washers", "note": null, "est": 25}]}}, {"id": "living", "label": "Living", "categories": {"Seating": [{"name": "Sofa", "note": null, "est": 1799}, {"name": "Occasional stool", "note": null, "est": 90}], "Tables": [{"name": "Coffee table", "note": null, "est": 350}, {"name": "Side / end table", "note": null, "est": 180}], "Storage & Media": [{"name": "TV unit / media console", "note": "Custom Made", "est": 1200}], "Lighting": [{"name": "Table lamp", "note": null, "est": 90}], "Soft Furnishings": [{"name": "Cushions", "note": "Just one", "est": 40}, {"name": "Throw blanket", "note": null, "est": 60}, {"name": "Curtains / blinds", "note": null, "est": 300}], "Entertainment": [{"name": "TV", "note": null, "est": 900}, {"name": "Soundbar / speakers", "note": null, "est": 250}], "Decor": [{"name": "Wall art / prints", "note": null, "est": 120}, {"name": "Indoor plants + planters", "note": null, "est": 60}]}}, {"id": "balcony", "label": "Balcony", "categories": {"Greenery": [{"name": "Planters / pots", "note": null, "est": 35}, {"name": "Outdoor plants", "note": null, "est": 25}], "Other": [{"name": "Outdoor lighting (string lights)", "note": null, "est": 30}]}}, {"id": "entryway", "label": "Entryway", "categories": {"Furniture": [{"name": "Shoe rack", "note": null, "est": 90}]}}, {"id": "office", "label": "Office", "categories": {"Furniture": [{"name": "Desk", "note": null, "est": 350}, {"name": "Office chair", "note": null, "est": 300}, {"name": "Bookshelf / filing storage", "note": null, "est": 200}], "Lighting": [{"name": "Desk lamp", "note": null, "est": 45}]}}, {"id": "general", "label": "General", "categories": {"Cleaning": [{"name": "Vacuum cleaner", "note": null, "est": 350}, {"name": "Broom + dustpan", "note": null, "est": 25}]}}]
+;
+
+  // Moodboard pins: images/screenshots with an optional caption, source
+  // link and room tag. Add objects here as things get sent through —
+  // {img, caption, source, room}. Empty for now.
+  var MOODBOARD = [];
+
+  var fmt = new Intl.NumberFormat("en-AU", { style:"currency", currency:"AUD", maximumFractionDigits:0 });
+
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function sourcedNames(roomId, cat){
+    var cats = ITEMS[roomId] || {};
+    var list = cats[cat] || [];
+    return list.map(function(i){ return (i.fulfills || i.name).trim().toLowerCase(); });
+  }
+
+  function roomItemCount(roomId){
+    var n = 0;
+    var cats = ITEMS[roomId] || {};
+    Object.keys(cats).forEach(function(c){ n += cats[c].length; });
+    return n;
+  }
+
+  function roomPendingCount(roomData){
+    if (!roomData) return 0;
+    var n = 0;
+    Object.keys(roomData.categories).forEach(function(cat){
+      var done = sourcedNames(roomData.id, cat);
+      roomData.categories[cat].forEach(function(it){
+        if (done.indexOf(it.name.trim().toLowerCase()) === -1) n++;
+      });
+    });
+    return n;
+  }
+
+  function buildCard(item){
+    var card = el("a", "card");
+    card.href = item.url;
+    card.target = "_blank";
+    card.rel = "noopener";
+    card.style.textDecoration = "none";
+
+    var shot = el("div", "shot");
+    shot.appendChild(el("span", "tag", item.code));
+    var img = document.createElement("img");
+    img.src = item.img;
+    img.alt = item.name;
+    img.loading = "lazy";
+    shot.appendChild(img);
+    card.appendChild(shot);
+
+    var body = el("div", "body");
+    body.appendChild(el("span", "name", item.name));
+    var materialLine = item.brand ? (item.brand + " — " + item.material) : item.material;
+    body.appendChild(el("span", "material", materialLine));
+    if (item.note){
+      body.appendChild(el("span", "material", item.note));
+    }
+    body.appendChild(el("span", "spec", item.dims));
+    var foot = el("div", "foot");
+    foot.appendChild(el("span", "price", fmt.format(item.price)));
+    foot.appendChild(el("span", "view", "View product →"));
+    body.appendChild(foot);
+    card.appendChild(body);
+
+    return card;
+  }
+
+  function buildPlaceholder(name, note, est){
+    var card = el("div", "card placeholder");
+    var shot = el("div", "shot");
+    shot.appendChild(el("span", "pname", name));
+    if (note){
+      shot.appendChild(el("span", "pnote", note));
+    }
+    if (typeof est === "number"){
+      shot.appendChild(el("span", "pest", "~" + fmt.format(est) + " est."));
+    }
+    shot.appendChild(el("span", "label", "Not sourced yet"));
+    card.appendChild(shot);
+    return card;
+  }
+
+  function buildRoom(room, pendingData){
+    var section = el("section", "room");
+    section.id = "panel-" + room.id;
+    section.setAttribute("role", "tabpanel");
+
+    var sourcedCats = ITEMS[room.id] || {};
+    var pendingCats = pendingData ? pendingData.categories : {};
+
+    // union of category names, sourced first in their own order, then
+    // any pending-only category, each in checklist order.
+    var catOrder = [];
+    Object.keys(sourcedCats).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
+    Object.keys(pendingCats).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
+
+    var sourcedCount = roomItemCount(room.id);
+    var pendingCount = roomPendingCount(pendingData);
+    var total = sourcedCount + pendingCount;
+
+    var head = el("div", "room-head");
+    head.appendChild(el("h2", null, room.label));
+    head.appendChild(el("span", "room-stat", sourcedCount + " of " + total + " sourced"));
+    section.appendChild(head);
+
+    catOrder.forEach(function(cat){
+      section.appendChild(el("div", "cat-label", cat));
+      var g = el("div", "grid");
+      (sourcedCats[cat] || []).forEach(function(item){ g.appendChild(buildCard(item)); });
+      var done = sourcedNames(room.id, cat);
+      (pendingCats[cat] || []).forEach(function(it){
+        if (done.indexOf(it.name.trim().toLowerCase()) === -1){
+          g.appendChild(buildPlaceholder(it.name, it.note, it.est));
+        }
+      });
+      section.appendChild(g);
+    });
+
+    return section;
+  }
+
+  function computeTotals(){
+    var confirmed = 0, estimate = 0, sourced = 0, all = 0;
+    ROOMS.forEach(function(r){
+      var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
+      sourced += roomItemCount(r.id);
+      all += roomItemCount(r.id) + roomPendingCount(pd);
+
+      var cats = ITEMS[r.id] || {};
+      Object.keys(cats).forEach(function(c){
+        cats[c].forEach(function(i){ confirmed += (i.price || 0); });
+      });
+
+      if (pd){
+        Object.keys(pd.categories).forEach(function(cat){
+          var done = sourcedNames(r.id, cat);
+          pd.categories[cat].forEach(function(it){
+            if (done.indexOf(it.name.trim().toLowerCase()) === -1){
+              estimate += (it.est || 0);
+            }
+          });
+        });
+      }
+    });
+    return { confirmed:confirmed, estimate:estimate, sourced:sourced, all:all };
+  }
+
+  function setActive(roomId){
+    ROOMS.forEach(function(r){
+      var tab = document.getElementById("tab-" + r.id);
+      var panel = document.getElementById("panel-" + r.id);
+      var active = r.id === roomId;
+      if (tab) tab.setAttribute("aria-selected", active ? "true" : "false");
+      if (panel) panel.classList.toggle("active", active);
+    });
+    try { localStorage.setItem("new-home-schedule:tab", roomId); } catch(e){}
+  }
+
+  function init(){
+    var tabRow = document.getElementById("tab-row");
+    var roomsWrap = document.getElementById("rooms");
+
+    ROOMS.forEach(function(r){
+      var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
+      var sourcedCount = roomItemCount(r.id);
+      var totalCount = sourcedCount + roomPendingCount(pd);
+
+      var btn = el("button", "tab");
+      btn.id = "tab-" + r.id;
+      btn.type = "button";
+      btn.setAttribute("role", "tab");
+      btn.innerHTML =
+        '<span class="code">' + r.code + '</span>' +
+        '<span>' + r.label + '</span>' +
+        '<span class="count">(' + sourcedCount + '/' + totalCount + ')</span>';
+      btn.addEventListener("click", function(){
+        setActive(r.id);
+        location.hash = r.id;
+      });
+      tabRow.appendChild(btn);
+
+      roomsWrap.appendChild(buildRoom(r, pd));
+    });
+
+    var totals = computeTotals();
+    document.getElementById("item-count").textContent =
+      totals.sourced + " of " + totals.all + " sourced";
+    document.getElementById("running-total").innerHTML =
+      fmt.format(totals.confirmed) +
+      ' <span class="est" id="estimate-line">+ ~' + fmt.format(totals.estimate) + ' est.</span>';
+
+    var initial = "kitchen";
+    var fromHash = (location.hash || "").replace("#", "");
+    var stored = null;
+    try { stored = localStorage.getItem("new-home-schedule:tab"); } catch(e){}
+    if (ROOMS.some(function(r){ return r.id === fromHash; })) initial = fromHash;
+    else if (ROOMS.some(function(r){ return r.id === stored; })) initial = stored;
+
+    setActive(initial);
+  }
+
+  window.addEventListener("hashchange", function(){
+    var id = (location.hash || "").replace("#", "");
+    if (ROOMS.some(function(r){ return r.id === id; })) setActive(id);
+  });
+
+  function buildMoodCard(pin){
+    var fig = el("figure");
+    var img = document.createElement("img");
+    img.src = pin.img;
+    img.alt = pin.caption || "";
+    img.loading = "lazy";
+    fig.appendChild(img);
+    if (pin.caption || pin.room){
+      var cap = el("figcaption");
+      if (pin.caption) cap.appendChild(el("b", null, pin.caption));
+      if (pin.room) cap.appendChild(document.createTextNode(pin.room));
+      if (pin.source){
+        cap.appendChild(document.createElement("br"));
+        var a = document.createElement("a");
+        a.href = pin.source; a.target = "_blank"; a.rel = "noopener";
+        a.textContent = "Source →";
+        cap.appendChild(a);
+      }
+      fig.appendChild(cap);
+    }
+    return fig;
+  }
+
+  function renderMoodboard(){
+    var grid = document.getElementById("mood-grid");
+    var empty = document.getElementById("mood-empty");
+    grid.innerHTML = "";
+    MOODBOARD.forEach(function(pin){ grid.appendChild(buildMoodCard(pin)); });
+    grid.style.display = MOODBOARD.length ? "" : "none";
+    empty.style.display = MOODBOARD.length ? "none" : "";
+    document.getElementById("mood-stat").textContent =
+      MOODBOARD.length + " pin" + (MOODBOARD.length === 1 ? "" : "s");
+  }
+
+  function setPage(page){
+    var itemsBtn = document.getElementById("page-items");
+    var moodBtn = document.getElementById("page-moodboard");
+    var itemsView = document.getElementById("view-items");
+    var moodView = document.getElementById("view-moodboard");
+    var onMood = page === "moodboard";
+    itemsBtn.setAttribute("aria-selected", onMood ? "false" : "true");
+    moodBtn.setAttribute("aria-selected", onMood ? "true" : "false");
+    itemsView.classList.toggle("active", !onMood);
+    moodView.classList.toggle("active", onMood);
+    try { localStorage.setItem("new-home-schedule:page", page); } catch(e){}
+  }
+
+  document.getElementById("page-items").addEventListener("click", function(){ setPage("items"); });
+  document.getElementById("page-moodboard").addEventListener("click", function(){ setPage("moodboard"); });
+
+  renderMoodboard();
+  var storedPage = "items";
+  try { storedPage = localStorage.getItem("new-home-schedule:page") || "items"; } catch(e){}
+  setPage(storedPage);
+
+  function setView(view){
+    var roomsWrap = document.getElementById("rooms");
+    var gridBtn = document.getElementById("view-grid");
+    var listBtn = document.getElementById("view-list");
+    roomsWrap.classList.toggle("list-view", view === "list");
+    gridBtn.setAttribute("aria-pressed", view === "grid" ? "true" : "false");
+    listBtn.setAttribute("aria-pressed", view === "list" ? "true" : "false");
+    try { localStorage.setItem("new-home-schedule:view", view); } catch(e){}
+  }
+
+  document.getElementById("view-grid").addEventListener("click", function(){ setView("grid"); });
+  document.getElementById("view-list").addEventListener("click", function(){ setView("list"); });
+
+  var storedView = "grid";
+  try { storedView = localStorage.getItem("new-home-schedule:view") || "grid"; } catch(e){}
+  setView(storedView);
+
+  init();
+})();
+</script>
