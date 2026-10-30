@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<meta charset="utf-8">
 <title>New Home Schedule</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -163,11 +164,37 @@
   #rooms.list-view .card.placeholder .pnote,
   #rooms.list-view .card.placeholder .pest{white-space:nowrap}
   #rooms.list-view .card.placeholder .label{margin-top:0; padding-top:0}
+  #rooms.list-view .card{padding-right:44px}
+  #rooms.list-view .buy{top:50%; transform:translateY(-50%)}
 
   .card{
     background:var(--surface); border:1px solid var(--line); border-radius:3px;
     overflow:hidden; display:flex; flex-direction:column; min-width:0;
+    position:relative;
   }
+
+  /* ---- Bought checkbox ---- */
+  .buy{
+    position:absolute; top:6px; right:6px; z-index:2;
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .buy input{
+    -webkit-appearance:none; appearance:none; margin:0; cursor:pointer;
+    width:20px; height:20px; border:1.5px solid var(--ink-45); border-radius:3px;
+    background:var(--surface); display:grid; place-content:center;
+  }
+  .buy input::before{
+    content:""; width:10px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff;
+    transform:translateY(-1px) rotate(-45deg); opacity:0;
+  }
+  .buy input:hover{border-color:var(--ink)}
+  .buy input:checked{background:var(--avocado); border-color:var(--avocado)}
+  .buy input:checked::before{opacity:1}
+  .buy input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .card.bought > :not(.buy){opacity:.45}
+  .card.bought img{filter:grayscale(1)}
+  .card.bought .name, .card.bought .pname{text-decoration:line-through}
   .card .shot{
     aspect-ratio:4/3; background:var(--panel); display:flex; align-items:center; justify-content:center;
     position:relative;
@@ -182,7 +209,8 @@
     font-family:var(--font-display); font-weight:600; font-size:15.5px; line-height:1.3;
     text-decoration:none; color:var(--ink);
   }
-  .card .name:hover{color:var(--accent)}
+  .card .name::after{content:""; position:absolute; inset:0; z-index:1}
+  .card:hover .name{color:var(--accent)}
   .card .material{font-size:11.5px; color:var(--ink-70); line-height:1.4}
   .card .spec{
     font-family:var(--font-mono); font-size:11px; color:var(--ink-45);
@@ -282,7 +310,8 @@
       <p class="sub">Furniture &amp; equipment, room by room</p>
     </div>
     <div class="totals">
-      <span id="item-count">1 of 91 sourced</span>
+      <span id="item-count">1 of 91 sourced</span><br>
+      <span id="bought-count">0 of 91 bought</span>
       <b id="running-total">$1,799 <span class="est" id="estimate-line">+ ~$12,816 est.</span></b>
     </div>
   </div>
@@ -440,12 +469,51 @@
     return n;
   }
 
-  function buildCard(item){
-    var card = el("a", "card");
-    card.href = item.url;
-    card.target = "_blank";
-    card.rel = "noopener";
-    card.style.textDecoration = "none";
+  // Bought ticks live in this browser's localStorage, keyed by
+  // room|category|name. A sourced card uses its "fulfills" name, so a
+  // placeholder ticked before its product is found stays ticked after.
+  var BOUGHT_KEY = "new-home-schedule:bought";
+  var bought = {};
+  try { (JSON.parse(localStorage.getItem(BOUGHT_KEY)) || []).forEach(function(k){ bought[k] = true; }); } catch(e){}
+
+  function itemKey(roomId, cat, name){
+    return [roomId, cat, name.trim().toLowerCase()].join("|");
+  }
+
+  function saveBought(){
+    try { localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought))); } catch(e){}
+  }
+
+  function addBuyBox(card, key, name){
+    var label = el("label", "buy");
+    label.title = "Mark as bought";
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = !!bought[key];
+    box.setAttribute("aria-label", "Bought: " + name);
+    card.classList.toggle("bought", box.checked);
+    box.addEventListener("change", function(){
+      if (box.checked) bought[key] = true; else delete bought[key];
+      card.classList.toggle("bought", box.checked);
+      saveBought();
+      updateBoughtStats();
+    });
+    label.appendChild(box);
+    card.appendChild(label);
+  }
+
+  function updateBoughtStats(){
+    var all = document.querySelectorAll("#rooms .card").length;
+    var got = document.querySelectorAll("#rooms .card.bought").length;
+    document.getElementById("bought-count").textContent = got + " of " + all + " bought";
+    Array.prototype.forEach.call(document.querySelectorAll("#rooms .room"), function(section){
+      var n = section.querySelectorAll(".card.bought").length;
+      section.querySelector(".room-bought").textContent = n ? " · " + n + " bought" : "";
+    });
+  }
+
+  function buildCard(item, key){
+    var card = el("div", "card");
 
     var shot = el("div", "shot");
     shot.appendChild(el("span", "tag", item.code));
@@ -457,7 +525,11 @@
     card.appendChild(shot);
 
     var body = el("div", "body");
-    body.appendChild(el("span", "name", item.name));
+    var link = el("a", "name", item.name);
+    link.href = item.url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    body.appendChild(link);
     var materialLine = item.brand ? (item.brand + " — " + item.material) : item.material;
     body.appendChild(el("span", "material", materialLine));
     if (item.note){
@@ -469,11 +541,12 @@
     foot.appendChild(el("span", "view", "View product →"));
     body.appendChild(foot);
     card.appendChild(body);
+    addBuyBox(card, key, item.name);
 
     return card;
   }
 
-  function buildPlaceholder(name, note, est){
+  function buildPlaceholder(name, note, est, key){
     var card = el("div", "card placeholder");
     var shot = el("div", "shot");
     shot.appendChild(el("span", "pname", name));
@@ -485,6 +558,7 @@
     }
     shot.appendChild(el("span", "label", "Not sourced yet"));
     card.appendChild(shot);
+    addBuyBox(card, key, name);
     return card;
   }
 
@@ -508,17 +582,21 @@
 
     var head = el("div", "room-head");
     head.appendChild(el("h2", null, room.label));
-    head.appendChild(el("span", "room-stat", sourcedCount + " of " + total + " sourced"));
+    var stat = el("span", "room-stat", sourcedCount + " of " + total + " sourced");
+    stat.appendChild(el("span", "room-bought"));
+    head.appendChild(stat);
     section.appendChild(head);
 
     catOrder.forEach(function(cat){
       section.appendChild(el("div", "cat-label", cat));
       var g = el("div", "grid");
-      (sourcedCats[cat] || []).forEach(function(item){ g.appendChild(buildCard(item)); });
+      (sourcedCats[cat] || []).forEach(function(item){
+        g.appendChild(buildCard(item, itemKey(room.id, cat, item.fulfills || item.name)));
+      });
       var done = sourcedNames(room.id, cat);
       (pendingCats[cat] || []).forEach(function(it){
         if (done.indexOf(it.name.trim().toLowerCase()) === -1){
-          g.appendChild(buildPlaceholder(it.name, it.note, it.est));
+          g.appendChild(buildPlaceholder(it.name, it.note, it.est, itemKey(room.id, cat, it.name)));
         }
       });
       section.appendChild(g);
@@ -596,6 +674,7 @@
     document.getElementById("running-total").innerHTML =
       fmt.format(totals.confirmed) +
       ' <span class="est" id="estimate-line">+ ~' + fmt.format(totals.estimate) + ' est.</span>';
+    updateBoughtStats();
 
     var initial = "kitchen";
     var fromHash = (location.hash || "").replace("#", "");
