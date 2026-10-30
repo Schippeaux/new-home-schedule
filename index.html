@@ -260,10 +260,10 @@
   .mood-head h2{font-family:var(--font-display); font-weight:600; font-size:26px; margin:0}
   .mood-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-45)}
   .mood-grid{
-    columns:4 220px; column-gap:14px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; align-items:start;
   }
   .mood-grid figure{
-    break-inside:avoid; margin:0 0 14px; background:var(--surface); border:1px solid var(--line);
+    margin:0; background:var(--surface); border:1px solid var(--line);
     border-radius:3px; overflow:hidden;
   }
   .mood-grid img{display:block; width:100%; height:auto}
@@ -280,8 +280,6 @@
   .mood-empty p{font-family:var(--font-sans); font-size:13.5px; line-height:1.6; max-width:48ch; margin:0 auto}
   .mood-empty p + p{margin-top:8px; font-size:12px}
 
-  @media (max-width:900px){ .mood-grid{columns:3 180px} }
-  @media (max-width:600px){ .mood-grid{columns:2 150px} }
 
   details.how{
     margin-top:44px; border-top:1px solid var(--line); padding-top:18px;
@@ -358,7 +356,7 @@
       <h2>Moodboard</h2>
       <span class="mood-stat" id="mood-stat">0 pins</span>
     </div>
-    <div id="mood-grid" class="mood-grid"></div>
+    <div id="mood-sections"></div>
     <div id="mood-empty" class="mood-empty">
       <p>Nothing pinned yet.</p>
       <p>Send through photos, screenshots or links of looks, palettes and rooms you like and they'll get pinned here.</p>
@@ -431,9 +429,16 @@
 ;
 
   // Moodboard pins: images/screenshots with an optional caption, source
-  // link and room tag. Add objects here as things get sent through —
-  // {img, caption, source, room}. Empty for now.
-  var MOODBOARD = [];
+  // link and room tag, grouped under their section heading in the order
+  // sections first appear. Add objects here as things get sent through —
+  // {img, caption, source, room, section}.
+  var MOODBOARD = [
+    { section:"Real Estate Photos", img:"moodboard/living-kitchen.jpg",   caption:"Living, dining & kitchen", room:"Living" },
+    { section:"Real Estate Photos", img:"moodboard/bedroom.jpg",          caption:"Bed wall & balcony door",  room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/bedroom-window.jpg",   caption:"Bedroom window",           room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/bedroom-wardrobe.jpg", caption:"Wardrobe & ensuite door",  room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/ensuite.jpg",          caption:"Ensuite",                  room:"Bathroom" }
+  ];
 
   var fmt = new Intl.NumberFormat("en-AU", { style:"currency", currency:"AUD", maximumFractionDigits:0 });
 
@@ -715,11 +720,20 @@
   }
 
   function renderMoodboard(){
-    var grid = document.getElementById("mood-grid");
+    var wrap = document.getElementById("mood-sections");
     var empty = document.getElementById("mood-empty");
-    grid.innerHTML = "";
-    MOODBOARD.forEach(function(pin){ grid.appendChild(buildMoodCard(pin)); });
-    grid.style.display = MOODBOARD.length ? "" : "none";
+    wrap.innerHTML = "";
+    var grids = {};
+    MOODBOARD.forEach(function(pin){
+      var name = pin.section || "Pins";
+      if (!grids[name]){
+        wrap.appendChild(el("div", "cat-label", name));
+        grids[name] = el("div", "mood-grid");
+        wrap.appendChild(grids[name]);
+      }
+      grids[name].appendChild(buildMoodCard(pin));
+    });
+    wrap.style.display = MOODBOARD.length ? "" : "none";
     empty.style.display = MOODBOARD.length ? "none" : "";
     document.getElementById("mood-stat").textContent =
       MOODBOARD.length + " pin" + (MOODBOARD.length === 1 ? "" : "s");
