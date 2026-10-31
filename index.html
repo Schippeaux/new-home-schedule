@@ -149,9 +149,7 @@
     margin:0;
   }
   summary.cat-label{cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px}
-  /* moodboard section headings (plain, not collapsible) */
-  #mood-sections > .cat-label{margin:30px 0 14px}
-  #mood-sections > .cat-label:first-child{margin-top:0}
+  #mood-sections .cat-group .mood-grid{margin-top:14px}
   summary.cat-label::-webkit-details-marker{display:none}
   summary.cat-label:hover{color:var(--ink)}
   summary.cat-label .chev{
@@ -1215,6 +1213,19 @@
     return fig;
   }
 
+  // Moodboard sections are collapsible; the viewer's open/closed choice
+  // per section is kept in this browser, otherwise sections listed in
+  // MOOD_COLLAPSED_BY_DEFAULT start closed.
+  var MOOD_COLLAPSED_BY_DEFAULT = ["Real Estate Originals"];
+  var MOOD_OPEN_KEY = "new-home-schedule:moodboard-open";
+  var moodOpen = {};
+  try { moodOpen = JSON.parse(localStorage.getItem(MOOD_OPEN_KEY)) || {}; } catch(e){}
+
+  function moodSectionOpen(name){
+    if (typeof moodOpen[name] === "boolean") return moodOpen[name];
+    return MOOD_COLLAPSED_BY_DEFAULT.indexOf(name) === -1;
+  }
+
   function renderMoodboard(){
     var wrap = document.getElementById("mood-sections");
     var empty = document.getElementById("mood-empty");
@@ -1229,7 +1240,20 @@
     });
 
     sectionNames.forEach(function(name){
-      wrap.appendChild(el("div", "cat-label", name));
+      var details = document.createElement("details");
+      details.className = "cat-group";
+      details.open = moodSectionOpen(name);
+      details.addEventListener("toggle", function(){
+        moodOpen[name] = details.open;
+        try { localStorage.setItem(MOOD_OPEN_KEY, JSON.stringify(moodOpen)); } catch(e){}
+      });
+      var summary = document.createElement("summary");
+      summary.className = "cat-label";
+      summary.appendChild(document.createTextNode(name));
+      summary.appendChild(el("span", "chev", "▸"));
+      details.appendChild(summary);
+      wrap.appendChild(details);
+
       var grid = el("div", "mood-grid");
       orderedPinsFor(name, bySection[name]).forEach(function(pin){
         var idx = moodFlatList.length;
@@ -1237,7 +1261,7 @@
         grid.appendChild(buildMoodCard(pin, idx));
       });
       attachGridDnD(grid, name);
-      wrap.appendChild(grid);
+      details.appendChild(grid);
     });
 
     wrap.style.display = MOODBOARD.length ? "" : "none";
