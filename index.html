@@ -490,6 +490,37 @@
           note:"Black Friday sale price"
         }
       ],
+      "Soft Furnishings": [
+        {
+          code:"L-04",
+          name:"Plantae Pillow",
+          fulfills:"Cushions",
+          brand:"Chirnside",
+          material:"Chain-stitched, Olive · 60% acrylic / 40% wool on cotton jacquard, removable cover",
+          dims:"46 × 46 cm (18\" × 18\")",
+          price:80,
+          currency:"AUD",
+          url:"https://shop.chirnside.studio/products/plantae-pillow",
+          img:"plantae-pillow.jpg",
+          note:null
+        }
+      ],
+      "Decor": [
+        {
+          code:"L-05",
+          name:"Abstract Print, Timber Frame",
+          fulfills:"Wall art / prints",
+          brand:null,
+          material:"Giclée print on paper · natural timber frame",
+          dims:null,
+          price:null,
+          currency:"AUD",
+          url:null,
+          img:"living-wall-art.jpg",
+          note:null,
+          owned:true
+        }
+      ],
       "Office": [
         {
           code:"L-03",
@@ -676,23 +707,38 @@
     card.appendChild(shot);
 
     var body = el("div", "body");
-    var link = el("a", "name", item.name);
-    link.href = opts.href || item.url;
-    if (!opts.href){
-      link.target = "_blank";
-      link.rel = "noopener";
+    var href = opts.href || item.url;
+    var link = href ? el("a", "name", item.name) : el("span", "name", item.name);
+    if (href){
+      link.href = href;
+      if (!opts.href){
+        link.target = "_blank";
+        link.rel = "noopener";
+      }
     }
     body.appendChild(link);
-    var materialLine = item.brand ? (item.brand + " — " + item.material) : item.material;
-    body.appendChild(el("span", "material", materialLine));
+    if (item.brand || item.material){
+      var materialLine = item.brand ? (item.brand + " — " + item.material) : item.material;
+      body.appendChild(el("span", "material", materialLine));
+    }
     if (item.note){
       body.appendChild(el("span", "material", item.note));
     }
-    body.appendChild(el("span", "spec", item.dims));
+    if (item.dims){
+      body.appendChild(el("span", "spec", item.dims));
+    }
     var foot = el("div", "foot");
-    foot.appendChild(el("span", "price", priceText(item.price)));
-    foot.appendChild(el("span", "view", opts.view || "View product →"));
-    body.appendChild(foot);
+    if (typeof item.price === "number"){
+      foot.appendChild(el("span", "price", priceText(item.price)));
+    } else if (item.owned){
+      foot.appendChild(el("span", "price", "Already have"));
+    }
+    if (item.url || opts.href){
+      foot.appendChild(el("span", "view", opts.view || "View product →"));
+    }
+    if (foot.childNodes.length){
+      body.appendChild(foot);
+    }
     card.appendChild(body);
     if (key) addBuyBox(card, key, item.name);
 
