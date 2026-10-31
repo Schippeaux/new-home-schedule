@@ -309,6 +309,8 @@
   }
   .mood-grid{grid-auto-flow:dense}
   .mood-grid img{display:block; width:100%; height:auto; cursor:zoom-in}
+  .mood-grid figure{cursor:grab}
+  .mood-grid figure.dragging{opacity:.35; cursor:grabbing}
 
   /* ---- Lightbox ---- */
   #lightbox{
@@ -1053,6 +1055,12 @@
 
   window.addEventListener("hashchange", route);
 
+  // Flat, in-display-order list of pins across all sections — rebuilt by
+  // renderMoodboard() — so the lightbox can step left/right through
+  // everything in the order currently shown, not just one section.
+  var moodFlatList = [];
+  var lightboxIndex = -1;
+
   function openLightbox(pin){
     var lb = document.getElementById("lightbox");
     document.getElementById("lightbox-img").src = pin.img;
@@ -1062,8 +1070,16 @@
     lb.classList.add("active");
   }
 
+  function openLightboxAt(idx){
+    if (!moodFlatList.length) return;
+    idx = ((idx % moodFlatList.length) + moodFlatList.length) % moodFlatList.length;
+    lightboxIndex = idx;
+    openLightbox(moodFlatList[idx]);
+  }
+
   function closeLightbox(){
     document.getElementById("lightbox").classList.remove("active");
+    lightboxIndex = -1;
   }
 
   (function setupLightbox(){
@@ -1074,22 +1090,91 @@
       closeLightbox();
     });
     document.addEventListener("keydown", function(e){
-      if (e.key === "Escape") closeLightbox();
+      if (e.key === "Escape"){ closeLightbox(); return; }
+      if (!lb.classList.contains("active")) return;
+      if (e.key === "ArrowLeft"){ e.preventDefault(); openLightboxAt(lightboxIndex - 1); }
+      if (e.key === "ArrowRight"){ e.preventDefault(); openLightboxAt(lightboxIndex + 1); }
     });
   })();
 
-  function buildMoodCard(pin){
+  // Per-section custom order the viewer has dragged into place, kept in
+  // this browser's localStorage: {sectionName: [imgPath, ...]}.
+  var MOOD_ORDER_KEY = "new-home-schedule:moodboard-order";
+  var moodOrder = {};
+  try { moodOrder = JSON.parse(localStorage.getItem(MOOD_ORDER_KEY)) || {}; } catch(e){}
+
+  function saveMoodOrder(){
+    try { localStorage.setItem(MOOD_ORDER_KEY, JSON.stringify(moodOrder)); } catch(e){}
+  }
+
+  function orderedPinsFor(section, pins){
+    var saved = moodOrder[section];
+    if (!saved || !saved.length) return pins.slice();
+    var byId = {};
+    pins.forEach(function(p){ byId[p.img] = p; });
+    var ordered = [];
+    saved.forEach(function(id){
+      if (byId[id]){ ordered.push(byId[id]); delete byId[id]; }
+    });
+    // anything not in the saved order (newly added pins) keeps its
+    // original relative position, appended at the end
+    pins.forEach(function(p){ if (byId[p.img]) ordered.push(p); });
+    return ordered;
+  }
+
+  // Reorder-by-drag for one section's grid: on drop, read the grid's
+  // current DOM order (already live-reordered during dragover) back
+  // into moodOrder, then re-render from data so everything — including
+  // moodFlatList and lightbox indices — stays consistent.
+  function attachGridDnD(grid, section){
+    grid.addEventListener("dragover", function(e){
+      var dragging = grid.querySelector(".dragging");
+      if (!dragging) return;
+      e.preventDefault();
+      var figs = Array.prototype.slice.call(grid.querySelectorAll("figure:not(.dragging)"));
+      var closest = null, closestDist = Infinity;
+      figs.forEach(function(f){
+        var box = f.getBoundingClientRect();
+        var cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+        var d = Math.pow(e.clientX - cx, 2) + Math.pow(e.clientY - cy, 2);
+        if (d < closestDist){ closestDist = d; closest = { el: f, box: box }; }
+      });
+      if (!closest){ grid.appendChild(dragging); return; }
+      var before = e.clientX < (closest.box.left + closest.box.width / 2);
+      grid.insertBefore(dragging, before ? closest.el : closest.el.nextSibling);
+    });
+    grid.addEventListener("drop", function(e){
+      e.preventDefault();
+      moodOrder[section] = Array.prototype.map.call(
+        grid.querySelectorAll("figure"), function(f){ return f.dataset.imgId; }
+      );
+      saveMoodOrder();
+      renderMoodboard();
+    });
+  }
+
+  function buildMoodCard(pin, flatIndex){
     var fig = el("figure", pin.tall ? "tall" : null);
+    fig.draggable = true;
+    fig.dataset.imgId = pin.img;
+    fig.addEventListener("dragstart", function(e){
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", pin.img);
+      fig.classList.add("dragging");
+    });
+    fig.addEventListener("dragend", function(){ fig.classList.remove("dragging"); });
+
     var img = document.createElement("img");
     img.src = pin.img;
     img.alt = pin.caption || "";
     img.loading = "lazy";
+    img.draggable = false;
     img.tabIndex = 0;
     img.setAttribute("role", "button");
     img.setAttribute("aria-label", "View " + (pin.caption || "photo") + " full screen");
-    img.addEventListener("click", function(){ openLightbox(pin); });
+    img.addEventListener("click", function(){ openLightboxAt(flatIndex); });
     img.addEventListener("keydown", function(e){
-      if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLightbox(pin); }
+      if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLightboxAt(flatIndex); }
     });
     fig.appendChild(img);
     if (pin.caption || pin.room){
@@ -1112,16 +1197,27 @@
     var wrap = document.getElementById("mood-sections");
     var empty = document.getElementById("mood-empty");
     wrap.innerHTML = "";
-    var grids = {};
+    moodFlatList = [];
+
+    var sectionNames = [], bySection = {};
     MOODBOARD.forEach(function(pin){
       var name = pin.section || "Pins";
-      if (!grids[name]){
-        wrap.appendChild(el("div", "cat-label", name));
-        grids[name] = el("div", "mood-grid");
-        wrap.appendChild(grids[name]);
-      }
-      grids[name].appendChild(buildMoodCard(pin));
+      if (!bySection[name]){ bySection[name] = []; sectionNames.push(name); }
+      bySection[name].push(pin);
     });
+
+    sectionNames.forEach(function(name){
+      wrap.appendChild(el("div", "cat-label", name));
+      var grid = el("div", "mood-grid");
+      orderedPinsFor(name, bySection[name]).forEach(function(pin){
+        var idx = moodFlatList.length;
+        moodFlatList.push(pin);
+        grid.appendChild(buildMoodCard(pin, idx));
+      });
+      attachGridDnD(grid, name);
+      wrap.appendChild(grid);
+    });
+
     wrap.style.display = MOODBOARD.length ? "" : "none";
     empty.style.display = MOODBOARD.length ? "none" : "";
     document.getElementById("mood-stat").textContent =
