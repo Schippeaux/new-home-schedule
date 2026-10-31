@@ -133,13 +133,22 @@
   }
   .room-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-45)}
 
-  .cat-label{
+  .cat-group{margin:30px 0 0}
+  .cat-group:first-of-type{margin-top:0}
+  .cat-group .grid{margin-top:14px}
+  summary.cat-label{
     font-family:var(--font-sans); font-weight:600; font-size:11px; letter-spacing:.16em;
     text-transform:uppercase; color:var(--accent-2);
     border-left:2px solid var(--accent-2); padding-left:9px;
-    margin:30px 0 14px;
+    margin:0; cursor:pointer; list-style:none;
+    display:flex; align-items:center; gap:8px;
   }
-  .cat-label:first-of-type{margin-top:0}
+  summary.cat-label::-webkit-details-marker{display:none}
+  summary.cat-label:hover{color:var(--ink)}
+  summary.cat-label .chev{
+    margin-left:auto; font-size:10px; color:var(--ink-45); transition:transform .15s ease; flex:none;
+  }
+  details[open] > summary.cat-label .chev{transform:rotate(90deg)}
 
   #rooms{padding-top:28px}
 
@@ -361,7 +370,8 @@
     #rooms{padding-top:16px}
     .room-head{margin-bottom:14px}
     .room-head h2{font-size:22px}
-    .cat-label{margin:22px 0 10px}
+    .cat-group{margin:22px 0 0}
+    .cat-group .grid{margin-top:10px}
 
     .grid{grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; align-items:start}
     .card .body{padding:10px 10px 12px; gap:5px}
@@ -683,6 +693,15 @@
     return [roomId, cat, name.trim().toLowerCase()].join("|");
   }
 
+  // Which categories are collapsed, per room|category, in this browser.
+  var COLLAPSED_KEY = "new-home-schedule:collapsed";
+  var collapsedCats = {};
+  try { collapsedCats = JSON.parse(localStorage.getItem(COLLAPSED_KEY)) || {}; } catch(e){}
+
+  function saveCollapsedCats(){
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsedCats)); } catch(e){}
+  }
+
   function saveBought(){
     try { localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought))); } catch(e){}
   }
@@ -811,7 +830,21 @@
     section.appendChild(head);
 
     catOrder.forEach(function(cat){
-      section.appendChild(el("div", "cat-label", cat));
+      var catKey = room.id + "|" + cat;
+      var details = document.createElement("details");
+      details.className = "cat-group";
+      details.open = !collapsedCats[catKey];
+      details.addEventListener("toggle", function(){
+        if (details.open) delete collapsedCats[catKey]; else collapsedCats[catKey] = true;
+        saveCollapsedCats();
+      });
+      var summary = document.createElement("summary");
+      summary.className = "cat-label";
+      summary.appendChild(document.createTextNode(cat));
+      summary.appendChild(el("span", "chev", "▸"));
+      details.appendChild(summary);
+      section.appendChild(details);
+
       var g = el("div", "grid");
       slotsFor(room.id, cat).forEach(function(slot){
         var key = itemKey(room.id, cat, slot.name);
@@ -828,7 +861,7 @@
           g.appendChild(buildPlaceholder(it.name, it.note, it.est, itemKey(room.id, cat, it.name)));
         }
       });
-      section.appendChild(g);
+      details.appendChild(g);
     });
 
     return section;
