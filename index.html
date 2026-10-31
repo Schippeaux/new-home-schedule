@@ -107,7 +107,13 @@
   .tab[aria-selected="true"] .code{color:var(--accent)}
 
   /* ---- View toggle ---- */
-  .toolbar{display:flex; justify-content:flex-end; padding-top:20px}
+  .toolbar{display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:20px}
+  .collapse-all-btn{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--surface); border:1px solid var(--line); border-radius:3px; color:var(--ink-70);
+    cursor:pointer; padding:8px 16px;
+  }
+  .collapse-all-btn:hover{color:var(--ink); border-color:var(--ink-45)}
   .view-switch{
     display:inline-flex; border:1px solid var(--line); border-radius:3px; overflow:hidden;
   }
@@ -431,6 +437,7 @@
 
   <main class="wrap">
     <div class="toolbar">
+      <button type="button" class="collapse-all-btn" id="collapse-all">Collapse all</button>
       <div class="view-switch" role="group" aria-label="View">
         <button type="button" class="view-btn" id="view-grid" aria-pressed="true">Grid</button>
         <button type="button" class="view-btn" id="view-list" aria-pressed="false">List</button>
@@ -702,6 +709,38 @@
     try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsedCats)); } catch(e){}
   }
 
+  // Every room|category key that actually appears in the schedule
+  // (sourced items, pending items, or both), across all rooms.
+  function allCatKeys(){
+    var keys = [];
+    ROOMS.forEach(function(r){
+      var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
+      var cats = pd ? Object.keys(pd.categories).slice() : [];
+      Object.keys(ITEMS[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+      cats.forEach(function(c){ keys.push(r.id + "|" + c); });
+    });
+    return keys;
+  }
+
+  function updateCollapseAllBtn(){
+    var btn = document.getElementById("collapse-all");
+    var keys = allCatKeys();
+    var allCollapsed = keys.length > 0 && keys.every(function(k){ return collapsedCats[k]; });
+    btn.textContent = allCollapsed ? "Expand all" : "Collapse all";
+  }
+
+  document.getElementById("collapse-all").addEventListener("click", function(){
+    var keys = allCatKeys();
+    var allCollapsed = keys.length > 0 && keys.every(function(k){ return collapsedCats[k]; });
+    keys.forEach(function(k){
+      if (allCollapsed) delete collapsedCats[k]; else collapsedCats[k] = true;
+    });
+    saveCollapsedCats();
+    render();
+    route();
+    updateCollapseAllBtn();
+  });
+
   function saveBought(){
     try { localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought))); } catch(e){}
   }
@@ -833,10 +872,12 @@
       var catKey = room.id + "|" + cat;
       var details = document.createElement("details");
       details.className = "cat-group";
+      details.dataset.catKey = catKey;
       details.open = !collapsedCats[catKey];
       details.addEventListener("toggle", function(){
         if (details.open) delete collapsedCats[catKey]; else collapsedCats[catKey] = true;
         saveCollapsedCats();
+        updateCollapseAllBtn();
       });
       var summary = document.createElement("summary");
       summary.className = "cat-label";
@@ -1127,5 +1168,6 @@
 
   render();
   route();
+  updateCollapseAllBtn();
 })();
 </script>
