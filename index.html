@@ -152,10 +152,13 @@
   #mood-sections .cat-group .mood-grid{margin-top:14px}
   summary.cat-label::-webkit-details-marker{display:none}
   summary.cat-label:hover{color:var(--ink)}
-  summary.cat-label .chev{
-    margin-left:auto; font-size:10px; color:var(--ink-45); transition:transform .15s ease; flex:none;
+  /* + / − toggle to the left of a collapsible category title */
+  summary.cat-label .toggle{
+    flex:none; width:14px; text-align:center;
+    font-family:var(--font-mono); font-size:14px; font-weight:500; line-height:1; letter-spacing:0;
   }
-  details[open] > summary.cat-label .chev{transform:rotate(90deg)}
+  summary.cat-label .toggle::before{content:"+"}
+  details[open] > summary.cat-label .toggle::before{content:"\2212"}
 
   #rooms{padding-top:28px}
 
@@ -616,7 +619,7 @@
     { section:"Real Estate Photos", img:"moodboard/empty-kitchen-bedroom.jpg", caption:"Kitchen & bedroom doorway", room:"Kitchen" },
     { section:"Real Estate Photos", img:"moodboard/empty-bedroom.jpg",          caption:"Bed wall & balcony door",  room:"Bedroom" },
     { section:"Real Estate Photos", img:"moodboard/empty-bedroom-window.jpg",   caption:"Bedroom window",           room:"Bedroom" },
-    { section:"Real Estate Photos", img:"moodboard/empty-bedroom-wardrobe.jpg", caption:"Wardrobe & ensuite door",  room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/empty-bedroom-wardrobe.jpg", caption:"Ensuite door, wardrobe removed", room:"Bedroom" },
     { section:"Real Estate Photos", img:"moodboard/empty-living-entry.jpg",     caption:"Living room toward the entry", room:"Living" },
     { section:"Real Estate Photos", img:"moodboard/empty-ensuite.jpg",          caption:"Ensuite",                  room:"Bathroom" },
     { section:"Real Estate Originals", img:"moodboard/living-kitchen.jpg",   caption:"Living, dining & kitchen", room:"Living" },
@@ -894,8 +897,8 @@
       });
       var summary = document.createElement("summary");
       summary.className = "cat-label";
+      summary.appendChild(el("span", "toggle"));
       summary.appendChild(document.createTextNode(cat));
-      summary.appendChild(el("span", "chev", "▸"));
       details.appendChild(summary);
       section.appendChild(details);
 
@@ -1249,8 +1252,8 @@
       });
       var summary = document.createElement("summary");
       summary.className = "cat-label";
+      summary.appendChild(el("span", "toggle"));
       summary.appendChild(document.createTextNode(name));
-      summary.appendChild(el("span", "chev", "▸"));
       details.appendChild(summary);
       wrap.appendChild(details);
 
