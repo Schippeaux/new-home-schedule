@@ -142,13 +142,16 @@
   .cat-group{margin:30px 0 0}
   .cat-group:first-of-type{margin-top:0}
   .cat-group .grid{margin-top:14px}
-  summary.cat-label{
+  .cat-label{
     font-family:var(--font-sans); font-weight:600; font-size:11px; letter-spacing:.16em;
     text-transform:uppercase; color:var(--accent-2);
     border-left:2px solid var(--accent-2); padding-left:9px;
-    margin:0; cursor:pointer; list-style:none;
-    display:flex; align-items:center; gap:8px;
+    margin:0;
   }
+  summary.cat-label{cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px}
+  /* moodboard section headings (plain, not collapsible) */
+  #mood-sections > .cat-label{margin:30px 0 14px}
+  #mood-sections > .cat-label:first-child{margin-top:0}
   summary.cat-label::-webkit-details-marker{display:none}
   summary.cat-label:hover{color:var(--ink)}
   summary.cat-label .chev{
@@ -613,6 +616,11 @@
     { section:"Real Estate Photos", img:"moodboard/empty-kitchen.jpg",         caption:"Kitchen",                  room:"Kitchen", tall:true },
     { section:"Real Estate Photos", img:"moodboard/empty-living-long.jpg",     caption:"Living room from the kitchen", room:"Living" },
     { section:"Real Estate Photos", img:"moodboard/empty-kitchen-bedroom.jpg", caption:"Kitchen & bedroom doorway", room:"Kitchen" },
+    { section:"Real Estate Photos", img:"moodboard/empty-bedroom.jpg",          caption:"Bed wall & balcony door",  room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/empty-bedroom-window.jpg",   caption:"Bedroom window",           room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/empty-bedroom-wardrobe.jpg", caption:"Wardrobe & ensuite door",  room:"Bedroom" },
+    { section:"Real Estate Photos", img:"moodboard/empty-living-entry.jpg",     caption:"Living room toward the entry", room:"Living" },
+    { section:"Real Estate Photos", img:"moodboard/empty-ensuite.jpg",          caption:"Ensuite",                  room:"Bathroom" },
     { section:"Real Estate Originals", img:"moodboard/living-kitchen.jpg",   caption:"Living, dining & kitchen", room:"Living" },
     { section:"Real Estate Originals", img:"moodboard/bedroom.jpg",          caption:"Bed wall & balcony door",  room:"Bedroom" },
     { section:"Real Estate Originals", img:"moodboard/bedroom-window.jpg",   caption:"Bedroom window",           room:"Bedroom" },
