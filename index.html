@@ -1107,6 +1107,15 @@
   var MOOD_ORDER_KEY = "new-home-schedule:moodboard-order";
   var moodOrder = {};
   try { moodOrder = JSON.parse(localStorage.getItem(MOOD_ORDER_KEY)) || {}; } catch(e){}
+  // The first batch of listing photos moved from "Real Estate Photos" to
+  // "Real Estate Originals"; carry any order saved under the old name.
+  var oldRE = moodOrder["Real Estate Photos"];
+  if (oldRE && !moodOrder["Real Estate Originals"] &&
+      oldRE.some(function(id){ return id.indexOf("moodboard/empty-") !== 0; })){
+    moodOrder["Real Estate Originals"] = oldRE;
+    delete moodOrder["Real Estate Photos"];
+    try { localStorage.setItem(MOOD_ORDER_KEY, JSON.stringify(moodOrder)); } catch(e){}
+  }
 
   function saveMoodOrder(){
     try { localStorage.setItem(MOOD_ORDER_KEY, JSON.stringify(moodOrder)); } catch(e){}
