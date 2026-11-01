@@ -317,6 +317,46 @@
   .mood-grid figure.dragging{opacity:.35; cursor:grabbing}
 
   /* ---- Lightbox ---- */
+  /* ---- Product detail card ---- */
+  #detail{
+    border:none; padding:0; background:transparent; color:var(--ink);
+    width:min(880px, calc(100vw - 32px)); max-width:none; max-height:calc(100vh - 48px);
+  }
+  #detail::backdrop{background:rgba(43,38,32,.55)}
+  #detail .d-wrap{
+    position:relative; background:var(--surface); border-radius:4px; overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.3);
+  }
+  #detail-body{display:grid; grid-template-columns:1.1fr 1fr}
+  #detail .d-shot{background:var(--panel); display:flex; align-items:center; justify-content:center; min-height:300px}
+  #detail .d-shot img{display:block; width:100%; height:100%; max-height:520px; object-fit:contain; padding:16px}
+  #detail .d-info{padding:26px 26px 24px; display:flex; flex-direction:column; gap:12px; align-items:flex-start}
+  #detail .d-tag{position:static}
+  #detail .d-name{font-family:var(--font-display); font-weight:600; font-size:24px; line-height:1.25; margin:0}
+  #detail .d-rows{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 14px; font-size:13px; line-height:1.45}
+  #detail .d-rows dt{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-45); padding-top:2px}
+  #detail .d-rows dd{margin:0; color:var(--ink-70)}
+  #detail .d-price{font-weight:700; font-size:22px; font-variant-numeric:tabular-nums; margin-top:4px}
+  #detail .d-link{
+    margin-top:auto; display:inline-block; background:var(--accent); color:#fff; text-decoration:none;
+    font-weight:600; font-size:13px; letter-spacing:.02em; padding:11px 18px; border-radius:3px;
+  }
+  #detail .d-link:hover{background:#a8462f}
+  #detail .d-close{
+    position:absolute; top:10px; right:10px; z-index:1; width:34px; height:34px; border-radius:50%;
+    border:none; background:rgba(255,255,255,.9); color:var(--ink); font-size:22px; line-height:1; cursor:pointer;
+  }
+  #detail .d-close:hover{background:#fff; color:var(--accent)}
+  .price.tbc{font-weight:500; color:var(--ink-45); font-size:13px}
+  @media (max-width:600px){
+    #detail-body{grid-template-columns:1fr}
+    #detail .d-shot{min-height:0}
+    #detail .d-shot img{max-height:300px}
+    #detail .d-info{padding:18px 18px 20px}
+    #detail .d-name{font-size:21px}
+    #detail .d-link{margin-top:6px; align-self:stretch; text-align:center}
+  }
+
   #lightbox{
     position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
     background:rgba(20,16,12,.92); padding:48px 24px; cursor:zoom-out;
@@ -466,6 +506,13 @@
   </main>
 </div>
 
+<dialog id="detail" aria-label="Product details">
+  <div class="d-wrap">
+    <button type="button" class="d-close" id="detail-close" aria-label="Close">×</button>
+    <div id="detail-body"></div>
+  </div>
+</dialog>
+
 <div id="lightbox" role="dialog" aria-modal="true" aria-label="Enlarged photo">
   <button type="button" class="lb-close">Close ✕</button>
   <img id="lightbox-img" src="" alt="">
@@ -510,6 +557,22 @@
   // them all. The first listed leads unless one has lead:true or the
   // viewer picks another.
   var ITEMS = {
+    bedroom: {
+      "Decor": [
+        {
+          code:"B-01",
+          name:"Elegant Berry Motif Wallpaper",
+          brand:"Happywall",
+          material:"Green & orange berry motif on cream · L pattern scale",
+          dims:"Made to measure — priced by wall width × height",
+          price:null,
+          currency:"AUD",
+          url:"https://www.happywall.com/au/elegant-berry-motif-in-green-orange-l-wallpaper",
+          img:"berry-wallpaper.jpg",
+          note:"Feature wall"
+        }
+      ]
+    },
     living: {
       "Seating": [
         {
@@ -818,15 +881,18 @@
     shot.appendChild(img);
     card.appendChild(shot);
 
+    // The name link stretches over the whole card: multi-option slots go
+    // to their options page, everything else opens the detail card.
     var body = el("div", "body");
-    var href = opts.href || item.url;
-    var link = href ? el("a", "name", item.name) : el("span", "name", item.name);
-    if (href){
-      link.href = href;
-      if (!opts.href){
-        link.target = "_blank";
-        link.rel = "noopener";
-      }
+    var link = el("a", "name", item.name);
+    if (opts.href){
+      link.href = opts.href;
+    } else {
+      link.href = "#";
+      link.addEventListener("click", function(e){
+        e.preventDefault();
+        openDetail(item, opts.tag);
+      });
     }
     body.appendChild(link);
     if (item.brand || item.material){
@@ -844,10 +910,10 @@
       foot.appendChild(el("span", "price", priceText(item.price)));
     } else if (item.owned){
       foot.appendChild(el("span", "price", "Already have"));
+    } else {
+      foot.appendChild(el("span", "price tbc", "Price TBC"));
     }
-    if (item.url || opts.href){
-      foot.appendChild(el("span", "view", opts.view || "View product →"));
-    }
+    foot.appendChild(el("span", "view", opts.view || "Details →"));
     if (foot.childNodes.length){
       body.appendChild(foot);
     }
@@ -856,6 +922,60 @@
 
     return card;
   }
+
+  // Detail card: everything about one product, with the shop link.
+  function openDetail(item, tag){
+    var d = document.getElementById("detail");
+    var box = document.getElementById("detail-body");
+    box.innerHTML = "";
+
+    var shot = el("div", "d-shot");
+    var img = document.createElement("img");
+    img.src = item.img;
+    img.alt = item.name;
+    shot.appendChild(img);
+    box.appendChild(shot);
+
+    var info = el("div", "d-info");
+    info.appendChild(el("span", "tag d-tag", tag || item.code));
+    info.appendChild(el("h3", "d-name")).textContent = item.name;
+    var rows = [
+      ["Brand", item.brand],
+      ["Material", item.material],
+      ["Details", item.dims],
+      ["Note", item.note]
+    ];
+    var dl = el("dl", "d-rows");
+    rows.forEach(function(r){
+      if (!r[1]) return;
+      dl.appendChild(el("dt", null)).textContent = r[0];
+      dl.appendChild(el("dd", null)).textContent = r[1];
+    });
+    info.appendChild(dl);
+
+    var price = typeof item.price === "number" ? priceText(item.price)
+      : item.owned ? "Already have" : "Price TBC";
+    info.appendChild(el("div", "d-price")).textContent = price;
+
+    if (item.url){
+      var a = el("a", "d-link", "View on website →");
+      a.href = item.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      info.appendChild(a);
+    }
+    box.appendChild(info);
+
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+    d.scrollTop = 0;
+  }
+
+  (function(){
+    var d = document.getElementById("detail");
+    document.getElementById("detail-close").addEventListener("click", function(){ d.close(); });
+    // click on the dimmed backdrop (the dialog element itself) closes it
+    d.addEventListener("click", function(e){ if (e.target === d) d.close(); });
+  })();
 
   function buildPlaceholder(name, note, est, key){
     var card = el("div", "card placeholder");
