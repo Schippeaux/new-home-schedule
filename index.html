@@ -157,6 +157,10 @@
     cursor:pointer; padding:8px 16px;
   }
   .collapse-all-btn:hover{color:var(--ink); border-color:var(--ink-45)}
+  .sync-status{
+    font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); letter-spacing:.04em;
+    color:var(--ink-45); margin-right:auto; text-align:left;
+  }
   .view-switch{
     display:inline-flex; border:1px solid var(--line); border-radius:3px; overflow:hidden;
   }
@@ -706,6 +710,7 @@
 
   <main class="wrap">
     <div class="toolbar">
+      <span class="sync-status" id="sync-status" aria-live="polite"></span>
       <button type="button" class="collapse-all-btn" id="add-item-btn">+ Add item</button>
       <button type="button" class="collapse-all-btn" id="collapse-all">Collapse all</button>
       <div class="view-switch" role="group" aria-label="View">
@@ -1219,6 +1224,7 @@
   try { customItems = JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {}; } catch(e){}
   function saveCustomItems(){
     try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customItems)); } catch(e){}
+    queueSync();
   }
   function addCustomItem(roomId, cat, item){
     if (!customItems[roomId]) customItems[roomId] = {};
@@ -1240,6 +1246,7 @@
   try { removedItems = JSON.parse(localStorage.getItem(REMOVED_KEY)) || {}; } catch(e){}
   function saveRemovedItems(){
     try { localStorage.setItem(REMOVED_KEY, JSON.stringify(removedItems)); } catch(e){}
+    queueSync();
   }
   function isRemoved(key){ return !!removedItems[key]; }
   function markRemoved(key, info){ removedItems[key] = info; saveRemovedItems(); renderRemovedList(); }
@@ -1317,6 +1324,7 @@
   function setLead(key, name){
     leads[key] = name;
     try { localStorage.setItem(LEAD_KEY, JSON.stringify(leads)); } catch(e){}
+    queueSync();
   }
 
   function priceText(p){ return p % 1 ? fmtCents.format(p) : fmt.format(p); }
@@ -1404,6 +1412,219 @@
 
   function saveBought(){
     try { localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought))); } catch(e){}
+    queueSync();
+  }
+
+  // ---- Cross-device sync: state.json in the repo ----
+  // Bought ticks, removed items, custom items and leading options are
+  // mirrored to state.json on GitHub. Each save is a 3-way merge: we diff
+  // this device's changes against the last state we synced, apply just
+  // those onto the latest remote copy, and write it back. So two devices
+  // editing different things don't overwrite each other.
+  var SYNC_OWNER = "Schippeaux";
+  var SYNC_REPO = "new-home-schedule";
+  var SYNC_BRANCH = "claude/nice-hypatia-wzi05g";
+  var SYNC_PATH = "state.json";
+  var syncBase = null;        // flattened state as of the last sync
+  var syncSha = null;         // GitHub blob sha of state.json
+  var syncReady = false;      // set once the startup pull has finished
+  var syncDirty = false;      // local changes not yet pushed
+  var syncTimer = null;
+  var syncInFlight = false;
+  var syncAgain = false;
+
+  function syncToken(){
+    try { return localStorage.getItem("github-token") || ""; } catch(e){ return ""; }
+  }
+  function utf8ToB64(s){ return btoa(unescape(encodeURIComponent(s))); }
+  function b64ToUtf8(s){ return decodeURIComponent(escape(atob(s.replace(/\n/g, "")))); }
+  function setSync(text){
+    var n = document.getElementById("sync-status");
+    if (n) n.textContent = text;
+  }
+
+  function snapshotOf(){
+    return { bought: Object.keys(bought), leads: leads, removed: removedItems, custom: customItems };
+  }
+  // Flatten to path -> value so changes can be diffed item by item.
+  function flatten(s){
+    var f = {};
+    (s.bought || []).forEach(function(k){ f["b:" + k] = "1"; });
+    Object.keys(s.leads || {}).forEach(function(k){ f["l:" + k] = JSON.stringify(s.leads[k]); });
+    Object.keys(s.removed || {}).forEach(function(k){ f["r:" + k] = JSON.stringify(s.removed[k]); });
+    Object.keys(s.custom || {}).forEach(function(room){
+      Object.keys(s.custom[room]).forEach(function(cat){
+        s.custom[room][cat].forEach(function(it){
+          f["c:" + room + "|" + cat + "|" + it.id] = JSON.stringify(it);
+        });
+      });
+    });
+    return f;
+  }
+  function unflatten(f){
+    var s = { bought: [], leads: {}, removed: {}, custom: {} };
+    Object.keys(f).forEach(function(p){
+      var kind = p.charAt(0), rest = p.slice(2), v = f[p];
+      if (kind === "b") s.bought.push(rest);
+      else if (kind === "l") s.leads[rest] = JSON.parse(v);
+      else if (kind === "r") s.removed[rest] = JSON.parse(v);
+      else if (kind === "c"){
+        var parts = rest.split("|");
+        var room = parts.shift(), id = parts.pop(), cat = parts.join("|");
+        if (!s.custom[room]) s.custom[room] = {};
+        if (!s.custom[room][cat]) s.custom[room][cat] = [];
+        s.custom[room][cat].push(JSON.parse(v));
+      }
+    });
+    return s;
+  }
+
+  // Replace the in-memory state and this browser's cached copy.
+  function applySnapshot(s){
+    bought = {};
+    (s.bought || []).forEach(function(k){ bought[k] = true; });
+    leads = s.leads || {};
+    removedItems = s.removed || {};
+    customItems = s.custom || {};
+    try {
+      localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought)));
+      localStorage.setItem(LEAD_KEY, JSON.stringify(leads));
+      localStorage.setItem(REMOVED_KEY, JSON.stringify(removedItems));
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(customItems));
+    } catch(e){}
+  }
+
+  function refreshAll(){
+    render(); route(); updateCollapseAllBtn(); renderRemovedList();
+  }
+
+  function fetchRemote(){
+    var url = "https://api.github.com/repos/" + SYNC_OWNER + "/" + SYNC_REPO + "/contents/" + SYNC_PATH + "?ref=" + SYNC_BRANCH;
+    return fetch(url, { headers: { "Authorization": "Bearer " + syncToken(), "Accept": "application/vnd.github+json" } })
+      .then(function(r){
+        if (r.status === 404) return { sha: null, data: null };
+        if (!r.ok) throw new Error("GitHub returned " + r.status);
+        return r.json().then(function(j){
+          return { sha: j.sha, data: JSON.parse(b64ToUtf8(j.content)) };
+        });
+      });
+  }
+
+  // Pull the latest remote state (used on load). Skipped if this device
+  // has unpushed changes, so it never throws away a tick in progress.
+  function pullRemote(){
+    if (syncDirty || syncInFlight || syncTimer) return Promise.resolve(false);
+    return fetchRemote().then(function(res){
+      syncSha = res.sha;
+      applySnapshot(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+      syncBase = flatten(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+      syncDirty = false;
+      setSync("Synced ✓");
+      return true;
+    });
+  }
+
+  function queueSync(){
+    syncDirty = true;
+    if (!syncReady) return;
+    if (!syncToken()){
+      setSync("Saved in this browser only · add a GitHub token on the home page to sync");
+      return;
+    }
+    clearTimeout(syncTimer);
+    setSync("Unsynced changes…");
+    syncTimer = setTimeout(function(){ syncTimer = null; pushState(0); }, 1500);
+  }
+
+  function pushState(attempt){
+    if (syncInFlight){ syncAgain = true; return; }
+    if (!syncToken()) return;
+    syncInFlight = true;
+    setSync("Saving…");
+    var retry = false;
+
+    fetchRemote().then(function(res){
+      var base = syncBase || {};
+      // Re-read local state here, so edits made while the fetch was running
+      // are included rather than dropped.
+      var localFlat = flatten(snapshotOf());
+      var merged = res.data ? flatten(res.data) : {};
+      var paths = Object.keys(base).concat(Object.keys(localFlat));
+      var changed = false;
+      paths.forEach(function(p){
+        if (localFlat[p] !== base[p]){
+          changed = true;
+          if (p in localFlat) merged[p] = localFlat[p];
+          else delete merged[p];
+        }
+      });
+
+      if (!changed){
+        syncSha = res.sha;
+        syncBase = flatten(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+        if (res.data){ applySnapshot(res.data); refreshAll(); }
+        setSync("Synced ✓");
+        return;
+      }
+
+      var newState = unflatten(merged);
+      var body = JSON.stringify(newState, null, 2);
+      var payload = {
+        message: "Update schedule state — " + new Date().toISOString().slice(0, 16).replace("T", " "),
+        content: utf8ToB64(body),
+        branch: SYNC_BRANCH
+      };
+      if (res.sha) payload.sha = res.sha;
+
+      return fetch("https://api.github.com/repos/" + SYNC_OWNER + "/" + SYNC_REPO + "/contents/" + SYNC_PATH, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + syncToken(), "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function(r){
+        if (r.status === 409 || r.status === 422){
+          var conflict = new Error("conflict");
+          conflict.conflict = true;
+          throw conflict;
+        }
+        if (!r.ok) throw new Error("GitHub returned " + r.status);
+        return r.json().then(function(j){
+          syncSha = j.content.sha;
+          syncBase = merged;
+          applySnapshot(newState);
+          refreshAll();
+          syncDirty = false;
+          setSync("Synced ✓");
+        });
+      });
+    }).catch(function(err){
+      if (err && err.conflict && attempt < 2){
+        retry = true;
+        return;
+      }
+      syncDirty = true;
+      setSync("Couldn't sync (" + (err && err.message ? err.message : "error") + ") · will retry on next change");
+    }).then(function(){
+      syncInFlight = false;
+      if (retry) return pushState(attempt + 1);
+      if (syncAgain){ syncAgain = false; queueSync(); }
+    });
+  }
+
+  function syncStart(){
+    if (!syncToken()){
+      setSync("Saved in this browser only · add a GitHub token on the home page to sync");
+      syncReady = true;
+      return;
+    }
+    setSync("Loading…");
+    pullRemote().then(function(){
+      syncReady = true;
+      refreshAll();
+      if (syncDirty) queueSync();
+    }).catch(function(){
+      syncReady = true;
+      setSync("Offline · showing this browser's copy");
+    });
   }
 
   function addBuyBox(card, key, name){
@@ -2152,6 +2373,7 @@
   render();
   route();
   updateCollapseAllBtn();
+  syncStart();
 
   // ================= Draft tooling =================
   // Settings panel, Claude notes panel, and the view-as-mobile toggle.

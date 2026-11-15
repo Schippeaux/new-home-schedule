@@ -41,3 +41,16 @@ draft-only toggles (placeholder highlighting, hi-res reminder dots), and
 convert the `@container (max-width:600px)` block back to a plain
 `@media (max-width:600px)` query (drop `#page-shell`'s
 `container-type:inline-size` too, since nothing will need it any more).
+
+## Cross-device sync (state.json)
+
+Bought ticks, removed items, custom items and leading options live in
+`state.json` at the repo root, not just in each browser. The page reads it
+through the GitHub API (not the Pages URL, which can lag) and writes changes
+back after a short pause, merging per change against the last synced state.
+Commits named "Update schedule state" come from this. Collapse state and the
+settings panel stay per-browser.
+
+Sync needs the shared `github-token` in the browser (entered on the home
+page). Without it the page works on this device only and says so in the
+toolbar.
