@@ -2413,10 +2413,23 @@
     var GH_REPO = "new-home-schedule";
     var GH_BRANCH = "claude/nice-hypatia-wzi05g";
     var GH_NOTES_PATH = "NOTES_INBOX.md";
-    var GH_TOKEN_KEY = "new-home-schedule:gh-token";
+    // Shared across every page on schippeaux.github.io (same origin), so a
+    // token entered on any of them works on all of them.
+    var GH_TOKEN_KEY = "github-token";
+    var GH_TOKEN_LEGACY_KEY = "new-home-schedule:gh-token";
 
     function getGhToken(){
-      try { return localStorage.getItem(GH_TOKEN_KEY) || ""; } catch(e){ return ""; }
+      try {
+        var t = localStorage.getItem(GH_TOKEN_KEY);
+        if (t) return t;
+        // One-time migration from the per-page key used before this change.
+        var legacy = localStorage.getItem(GH_TOKEN_LEGACY_KEY);
+        if (legacy){
+          localStorage.setItem(GH_TOKEN_KEY, legacy);
+          return legacy;
+        }
+        return "";
+      } catch(e){ return ""; }
     }
     function setGhToken(t){
       try { localStorage.setItem(GH_TOKEN_KEY, t); } catch(e){}
