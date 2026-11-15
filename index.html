@@ -22,10 +22,51 @@
     --line:var(--ink-15);
     --accent:var(--ketchup);
     --accent-2:var(--avocado);
-    --font-display:'Lora', Georgia, 'Times New Roman', serif;
-    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* ---- Theming foundation: font roles, weights, scale multipliers ---- */
+    --f-display:'Lora', Georgia, 'Times New Roman', serif;
+    --f-head:'Lora', Georgia, 'Times New Roman', serif;
+    --f-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --f-ui:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono:'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --w-display:700;
+    --w-head:600;
+    --k-all:1;
+    --k-body:1;
+    --k-head:1;
+    --k-display:1;
+    --k-space:1;
+    --lh:1.5;
+    --wrap-w:1180px;
     color-scheme: light;
+  }
+  html[data-mode="dark"]{
+    --ink:#EEE9E1;
+    --ink-70: rgba(238,233,225,.70);
+    --ink-45: rgba(238,233,225,.45);
+    --ink-15: rgba(238,233,225,.15);
+    --bg:#201C17;
+    --surface:#2A251E;
+    --panel:#161310;
+    color-scheme: dark;
+  }
+  html[data-accent="avocado"]{ --accent:var(--avocado); --accent-2:var(--ketchup); }
+  html[data-accent="ink"]{ --accent:var(--ink); --accent-2:var(--avocado); }
+  html[data-accent="slate"]{ --accent:#5B6B73; --accent-2:var(--avocado); }
+  *{ transition:background-color .15s ease, color .15s ease, border-color .15s ease; }
+  html[data-anim="reduced"] *, html[data-anim="reduced"] *::before, html[data-anim="reduced"] *::after{
+    transition-duration:0s !important; animation-duration:0s !important; animation-iteration-count:1 !important;
+  }
+  @media (prefers-reduced-motion:reduce){
+    *, *::before, *::after{ transition-duration:0s !important; animation-duration:0s !important; animation-iteration-count:1 !important; }
+  }
+  html[data-labels="sentence"] .page-tab, html[data-labels="sentence"] .tab,
+  html[data-labels="sentence"] .cat-label, html[data-labels="sentence"] .brand-eyebrow,
+  html[data-labels="sentence"] .view-btn, html[data-labels="sentence"] .collapse-all-btn,
+  html[data-labels="sentence"] details.how summary, html[data-labels="sentence"] .d-rows dt,
+  html[data-labels="sentence"] .opt-back, html[data-labels="sentence"] .opt-pill,
+  html[data-labels="sentence"] .lb-close, html[data-labels="sentence"] .label{
+    text-transform:none; letter-spacing:normal;
   }
 
   *{box-sizing:border-box}
@@ -33,7 +74,9 @@
     margin:0;
     background:var(--panel);
     color:var(--ink);
-    font-family:var(--font-sans);
+    font-family:var(--f-body);
+    font-size:calc(16px * var(--k-all) * var(--k-body));
+    line-height:var(--lh);
     -webkit-font-smoothing:antialiased;
   }
   body::before{
@@ -43,7 +86,7 @@
   }
   a{color:inherit}
   .wrap{
-    max-width:1180px;
+    max-width:var(--wrap-w);
     margin:0 auto;
     padding-left:max(20px, env(safe-area-inset-left,0px));
     padding-right:max(20px, env(safe-area-inset-right,0px));
@@ -53,27 +96,27 @@
   header.top{
     background:var(--bg);
     border-bottom:1px solid var(--line);
-    padding-block: calc(18px + env(safe-area-inset-top,0px)) 20px;
+    padding-block: calc(18px * var(--k-all) * var(--k-space) + env(safe-area-inset-top,0px)) calc(20px * var(--k-all) * var(--k-space));
   }
   header.top .wrap{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap}
   .brand-eyebrow{
-    font-family:var(--font-mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    font-family:var(--font-mono); font-size:calc(10px * var(--k-all)); letter-spacing:.18em; text-transform:uppercase;
     color:var(--accent); margin:0 0 6px;
   }
   h1{
-    font-family:var(--font-display); font-weight:700; font-size:clamp(28px,4vw,42px);
+    font-family:var(--f-display); font-weight:var(--w-display); font-size:calc(clamp(28px,4vw,42px) * var(--k-all) * var(--k-display));
     margin:0; letter-spacing:0; text-wrap:balance;
   }
   .sub{
-    font-family:var(--font-display); font-style:italic; font-size:16px;
+    font-family:var(--f-display); font-style:italic; font-size:calc(16px * var(--k-all) * var(--k-body));
     color:var(--ink-70); margin:6px 0 0;
   }
   .totals{
-    font-family:var(--font-mono); font-size:12px; color:var(--ink-70);
+    font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); color:var(--ink-70);
     text-align:right; line-height:1.7; white-space:nowrap;
   }
-  .totals b{font-size:20px; color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; display:block}
-  .totals .est{font-size:13px; font-weight:500; color:var(--ink-45)}
+  .totals b{font-family:var(--f-display); font-size:calc(20px * var(--k-all) * var(--k-display)); color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; display:block}
+  .totals .est{font-size:calc(13px * var(--k-all)); font-weight:500; color:var(--ink-45)}
 
   /* ---- Page switch (Items / Moodboard) ---- */
   nav.pages{
@@ -81,7 +124,7 @@
   }
   nav.pages .wrap{display:flex; gap:0; overflow-x:auto}
   .page-tab{
-    font-family:var(--font-mono); font-weight:500; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    font-family:var(--font-mono); font-weight:500; font-size:calc(11px * var(--k-all)); letter-spacing:.14em; text-transform:uppercase;
     background:none; border:none; color:rgba(255,255,255,.55); cursor:pointer;
     padding:11px 18px; border-bottom:2px solid transparent; white-space:nowrap;
   }
@@ -95,13 +138,13 @@
   }
   nav.tabs .wrap{display:flex; gap:2px; overflow-x:auto; padding-top:0; padding-bottom:0}
   .tab{
-    font-family:var(--font-sans); font-weight:600; font-size:13px; letter-spacing:.04em;
+    font-family:var(--f-ui); font-weight:600; font-size:calc(13px * var(--k-all)); letter-spacing:.04em;
     background:none; border:none; color:var(--ink-70); cursor:pointer;
     padding:16px 16px 13px; border-bottom:3px solid transparent;
     display:flex; align-items:baseline; gap:7px; white-space:nowrap;
   }
-  .tab .code{font-family:var(--font-mono); font-size:11px; color:var(--ink-45)}
-  .tab .count{font-family:var(--font-mono); font-size:11px; color:var(--ink-45)}
+  .tab .code{font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); color:var(--ink-45)}
+  .tab .count{font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); color:var(--ink-45)}
   .tab:hover{color:var(--ink)}
   .tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
   .tab[aria-selected="true"] .code{color:var(--accent)}
@@ -109,7 +152,7 @@
   /* ---- View toggle ---- */
   .toolbar{display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:20px}
   .collapse-all-btn{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); letter-spacing:.08em; text-transform:uppercase;
     background:var(--surface); border:1px solid var(--line); border-radius:3px; color:var(--ink-70);
     cursor:pointer; padding:8px 16px;
   }
@@ -118,7 +161,7 @@
     display:inline-flex; border:1px solid var(--line); border-radius:3px; overflow:hidden;
   }
   .view-btn{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); letter-spacing:.08em; text-transform:uppercase;
     background:var(--surface); border:none; color:var(--ink-70); cursor:pointer;
     padding:8px 16px;
   }
@@ -132,18 +175,18 @@
   .room.active{display:block}
   .room-head{
     display:flex; align-items:baseline; justify-content:space-between; gap:16px;
-    margin-bottom:22px; flex-wrap:wrap;
+    margin-bottom:calc(22px * var(--k-all) * var(--k-space)); flex-wrap:wrap;
   }
   .room-head h2{
-    font-family:var(--font-display); font-weight:600; font-size:26px; margin:0;
+    font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(26px * var(--k-all) * var(--k-head)); margin:0;
   }
-  .room-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-45)}
+  .room-stat{font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); color:var(--ink-45)}
 
-  .cat-group{margin:30px 0 0}
+  .cat-group{margin:calc(30px * var(--k-all) * var(--k-space)) 0 0}
   .cat-group:first-of-type{margin-top:0}
   .cat-group .grid{margin-top:14px}
   .cat-label{
-    font-family:var(--font-sans); font-weight:600; font-size:11px; letter-spacing:.16em;
+    font-family:var(--f-ui); font-weight:600; font-size:calc(11px * var(--k-all)); letter-spacing:.16em;
     text-transform:uppercase; color:var(--accent-2);
     border-left:2px solid var(--accent-2); padding-left:9px;
     margin:0;
@@ -160,7 +203,7 @@
   summary.cat-label .toggle::before{content:"+"}
   details[open] > summary.cat-label .toggle::before{content:"\2212"}
 
-  #rooms{padding-top:28px}
+  #rooms{padding-top:calc(28px * var(--k-all) * var(--k-space))}
 
   .grid{
     display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:16px;
@@ -215,7 +258,7 @@
 
   /* ---- Multi-option slots ---- */
   .opt-pill{
-    position:absolute; bottom:10px; left:10px; font-family:var(--font-mono); font-size:10px;
+    position:absolute; bottom:10px; left:10px; font-family:var(--font-mono); font-size:calc(10px * var(--k-all));
     letter-spacing:.06em; text-transform:uppercase; background:var(--ink); color:#fff;
     padding:3px 7px; border-radius:2px;
   }
@@ -224,7 +267,7 @@
   #view-items.show-options #rooms,
   #view-items.show-options .toolbar{display:none}
   .opt-back{
-    display:inline-block; margin:24px 0 14px; font-family:var(--font-mono); font-size:11px;
+    display:inline-block; margin:24px 0 14px; font-family:var(--font-mono); font-size:calc(11px * var(--k-all));
     letter-spacing:.08em; text-transform:uppercase; color:var(--accent); text-decoration:none;
   }
   .opt-back:hover{text-decoration:underline}
@@ -232,7 +275,7 @@
   .lead-pick{
     position:relative; z-index:2; display:flex; align-items:center; gap:9px; cursor:pointer;
     margin-top:6px; padding-top:10px; border-top:1px solid var(--line);
-    font-family:var(--font-sans); font-weight:600; font-size:12px; color:var(--ink-70);
+    font-family:var(--f-ui); font-weight:600; font-size:calc(12px * var(--k-all)); color:var(--ink-70);
     -webkit-tap-highlight-color:transparent;
   }
   .card.lead .lead-pick{color:var(--avocado); cursor:default}
@@ -246,26 +289,26 @@
   }
   .card .shot img{width:100%; height:100%; object-fit:contain; padding:10px; display:block}
   .tag{
-    position:absolute; top:10px; left:10px; font-family:var(--font-mono); font-size:10px;
+    position:absolute; top:10px; left:10px; font-family:var(--font-mono); font-size:calc(10px * var(--k-all));
     letter-spacing:.06em; background:var(--accent); color:#fff; padding:3px 7px; border-radius:2px;
   }
   .card .body{padding:13px 14px 15px; display:flex; flex-direction:column; gap:7px; flex:1}
   .card .name{
-    font-family:var(--font-display); font-weight:600; font-size:15.5px; line-height:1.3;
+    font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(15.5px * var(--k-all) * var(--k-head)); line-height:1.3;
     text-decoration:none; color:var(--ink);
   }
   .card .name::after{content:""; position:absolute; inset:0; z-index:1}
   .card:hover .name{color:var(--accent)}
-  .card .material{font-size:11.5px; color:var(--ink-70); line-height:1.4}
+  .card .material{font-family:var(--f-body); font-size:calc(11.5px * var(--k-all) * var(--k-body)); color:var(--ink-70); line-height:1.4}
   .card .spec{
-    font-family:var(--font-mono); font-size:11px; color:var(--ink-45);
+    font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); color:var(--ink-45);
     letter-spacing:.01em; border-top:1px solid var(--line); margin-top:auto;
     padding-top:9px;
   }
   .card .foot{display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:2px}
-  .price{font-family:var(--font-sans); font-weight:700; font-size:15.5px; font-variant-numeric:tabular-nums}
+  .price{font-family:var(--f-body); font-weight:700; font-size:calc(15.5px * var(--k-all) * var(--k-body)); font-variant-numeric:tabular-nums}
   .view{
-    font-family:var(--font-sans); font-weight:600; font-size:11px; letter-spacing:.03em;
+    font-family:var(--f-ui); font-weight:600; font-size:calc(11px * var(--k-all)); letter-spacing:.03em;
     color:var(--accent); text-decoration:none; white-space:nowrap;
   }
   .view:hover{text-decoration:underline}
@@ -278,18 +321,18 @@
     flex-direction:column; gap:3px; color:var(--ink-45); padding:14px 12px;
   }
   .card.placeholder .pname{
-    font-family:var(--font-display); font-weight:600; font-size:14.5px; color:var(--ink);
+    font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(14.5px * var(--k-all) * var(--k-head)); color:var(--ink);
     text-align:center; line-height:1.3;
   }
   .card.placeholder .pnote{
-    font-family:var(--font-sans); font-size:11px; color:var(--accent-2); text-align:center;
+    font-family:var(--f-body); font-size:calc(11px * var(--k-all) * var(--k-body)); color:var(--accent-2); text-align:center;
   }
   .card.placeholder .pest{
-    font-family:var(--font-mono); font-size:12.5px; color:var(--ink-70);
+    font-family:var(--font-mono); font-size:calc(12.5px * var(--k-all)); color:var(--ink-70);
     font-variant-numeric:tabular-nums; margin-top:2px;
   }
   .card.placeholder .label{
-    font-family:var(--font-mono); font-size:10px; letter-spacing:.1em;
+    font-family:var(--font-mono); font-size:calc(10px * var(--k-all)); letter-spacing:.1em;
     color:var(--ink-45); text-transform:uppercase; margin-top:auto; padding-top:8px;
   }
 
@@ -300,10 +343,10 @@
   #view-moodboard.active{display:block}
   .mood-head{
     display:flex; align-items:baseline; justify-content:space-between; gap:16px;
-    margin:28px 0 20px; flex-wrap:wrap;
+    margin:calc(28px * var(--k-all) * var(--k-space)) 0 calc(20px * var(--k-all) * var(--k-space)); flex-wrap:wrap;
   }
-  .mood-head h2{font-family:var(--font-display); font-weight:600; font-size:26px; margin:0}
-  .mood-stat{font-family:var(--font-mono); font-size:12px; color:var(--ink-45)}
+  .mood-head h2{font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(26px * var(--k-all) * var(--k-head)); margin:0}
+  .mood-stat{font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); color:var(--ink-45)}
   .mood-grid{
     display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; align-items:start;
   }
@@ -332,14 +375,14 @@
   #detail .d-shot img{display:block; width:100%; height:100%; max-height:520px; object-fit:contain; padding:16px}
   #detail .d-info{padding:26px 26px 24px; display:flex; flex-direction:column; gap:12px; align-items:flex-start}
   #detail .d-tag{position:static}
-  #detail .d-name{font-family:var(--font-display); font-weight:600; font-size:24px; line-height:1.25; margin:0}
-  #detail .d-rows{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 14px; font-size:13px; line-height:1.45}
-  #detail .d-rows dt{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-45); padding-top:2px}
+  #detail .d-name{font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(24px * var(--k-all) * var(--k-head)); line-height:1.25; margin:0}
+  #detail .d-rows{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 14px; font-family:var(--f-body); font-size:calc(13px * var(--k-all) * var(--k-body)); line-height:1.45}
+  #detail .d-rows dt{font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-45); padding-top:2px}
   #detail .d-rows dd{margin:0; color:var(--ink-70)}
-  #detail .d-price{font-weight:700; font-size:22px; font-variant-numeric:tabular-nums; margin-top:4px}
+  #detail .d-price{font-family:var(--f-display); font-weight:700; font-size:calc(22px * var(--k-all) * var(--k-display)); font-variant-numeric:tabular-nums; margin-top:4px}
   #detail .d-link{
     margin-top:auto; display:inline-block; background:var(--accent); color:#fff; text-decoration:none;
-    font-weight:600; font-size:13px; letter-spacing:.02em; padding:11px 18px; border-radius:3px;
+    font-family:var(--f-ui); font-weight:600; font-size:calc(13px * var(--k-all)); letter-spacing:.02em; padding:11px 18px; border-radius:3px;
   }
   #detail .d-link:hover{background:#a8462f}
   #detail .d-close{
@@ -364,45 +407,52 @@
   #lightbox.active{display:flex}
   #lightbox img{max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 40px rgba(0,0,0,.5); cursor:default}
   #lightbox .lb-close{
-    position:absolute; top:16px; right:20px; font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+    position:absolute; top:16px; right:20px; font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); letter-spacing:.08em;
     text-transform:uppercase; color:rgba(255,255,255,.75); background:none; border:1px solid rgba(255,255,255,.3);
     padding:7px 14px; border-radius:3px; cursor:pointer;
   }
   #lightbox .lb-close:hover{color:#fff; border-color:rgba(255,255,255,.6)}
   #lightbox .lb-cap{
     position:absolute; bottom:18px; left:24px; right:24px; text-align:center;
-    font-family:var(--font-sans); font-size:12.5px; color:rgba(255,255,255,.8);
+    font-family:var(--f-body); font-size:calc(12.5px * var(--k-all) * var(--k-body)); color:rgba(255,255,255,.8);
   }
   @media (max-width:600px){ #lightbox{padding:24px 14px} }
   .mood-grid figure.tall{grid-row:span 2; align-self:stretch; display:flex; flex-direction:column}
   .mood-grid figure.tall img{flex:1; min-height:0; object-fit:cover}
   .mood-grid figcaption{
-    padding:9px 11px 11px; font-family:var(--font-sans); font-size:11.5px; color:var(--ink-70); line-height:1.4;
+    padding:9px 11px 11px; font-family:var(--f-body); font-size:calc(11.5px * var(--k-all) * var(--k-body)); color:var(--ink-70); line-height:1.4;
   }
-  .mood-grid figcaption b{display:block; font-family:var(--font-display); font-size:13.5px; font-weight:600; color:var(--ink); margin-bottom:2px}
-  .mood-grid figcaption a{color:var(--accent); font-family:var(--font-mono); font-size:10.5px; text-decoration:none}
+  .mood-grid figcaption b{display:block; font-family:var(--f-head); font-size:calc(13.5px * var(--k-all) * var(--k-head)); font-weight:var(--w-head); color:var(--ink); margin-bottom:2px}
+  .mood-grid figcaption a{color:var(--accent); font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); text-decoration:none}
   .mood-grid figcaption a:hover{text-decoration:underline}
   .mood-empty{
     border:1.5px dashed var(--ink-45); border-radius:3px; padding:50px 24px; text-align:center;
     color:var(--ink-45); margin-top:4px;
   }
-  .mood-empty p{font-family:var(--font-sans); font-size:13.5px; line-height:1.6; max-width:48ch; margin:0 auto}
-  .mood-empty p + p{margin-top:8px; font-size:12px}
+  .mood-empty p{font-family:var(--f-body); font-size:calc(13.5px * var(--k-all) * var(--k-body)); line-height:1.6; max-width:48ch; margin:0 auto}
+  .mood-empty p + p{margin-top:8px; font-size:calc(12px * var(--k-all) * var(--k-body))}
 
 
   details.how{
     margin-top:44px; border-top:1px solid var(--line); padding-top:18px;
   }
   details.how summary{
-    cursor:pointer; font-family:var(--font-sans); font-weight:600; font-size:12.5px;
+    cursor:pointer; font-family:var(--f-ui); font-weight:600; font-size:calc(12.5px * var(--k-all));
     letter-spacing:.04em; color:var(--ink-70); list-style:none;
   }
   details.how summary::-webkit-details-marker{display:none}
   details.how summary::before{content:"— "}
-  details.how p{font-size:13px; color:var(--ink-70); line-height:1.6; max-width:62ch; margin:10px 0 0}
+  details.how p{font-family:var(--f-body); font-size:calc(13px * var(--k-all) * var(--k-body)); color:var(--ink-70); line-height:1.6; max-width:62ch; margin:10px 0 0}
 
-  /* ---- Phones: tighter header, two-up cards, compact list rows ---- */
-  @media (max-width:600px){
+  /* ---- Phones: tighter header, two-up cards, compact list rows ----
+     Written as a container query against #page-shell (container-type:
+     inline-size) rather than the browser viewport, so the header's
+     "view as mobile" toggle can narrow that one element and trigger
+     the exact same reflow a real phone would get, independent of how
+     wide the browser window actually is. A genuinely narrow window
+     also has a narrow #page-shell, so this covers real small screens
+     too — one set of rules, two ways to trigger it. ---- */
+  @container (max-width:600px){
     .wrap{padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px))}
     header.top{padding-block:calc(14px + env(safe-area-inset-top,0px)) 14px}
     header.top .wrap{flex-direction:column; align-items:stretch; gap:12px}
@@ -450,9 +500,147 @@
     .mood-grid{grid-template-columns:1fr; gap:12px}
     .mood-grid figure.tall{grid-row:auto}
   }
+
+  /* ---- Draft tooling: page shell, header icons, slide-in panels ----
+     Everything below is scaffolding for reviewing drafts of this
+     schedule — it never appears to anyone but the person steering
+     the build, carries no brand styling, and is cut entirely from
+     a --public build. */
+  #page-shell{
+    container-type:inline-size;
+    margin-inline:auto;
+    transition:max-width .25s ease;
+  }
+  html[data-devicepreview="1"] #page-shell{
+    max-width:var(--device-w, 390px);
+    border-inline:1px solid var(--ink-45);
+    box-shadow:0 0 0 6px var(--ink), 0 0 30px rgba(0,0,0,.25);
+    min-height:var(--device-h, auto);
+  }
+  html[data-devicepreview="1"] body{ background:var(--ink-15); padding-block:18px; }
+
+  .site-foot{ padding:26px 0 40px; }
+  .site-foot .wrap{
+    font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-45); border-top:1px solid var(--line); padding-top:14px;
+  }
+
+  .draft-tools{
+    position:fixed; top:12px; right:12px; z-index:200;
+    display:flex; gap:6px; background:#1C1812; border-radius:20px; padding:5px;
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+  }
+  .draft-icon{
+    width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+    background:transparent; color:rgba(255,255,255,.7);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .draft-icon:hover{color:#fff; background:rgba(255,255,255,.08)}
+  .draft-icon[aria-pressed="true"]{color:#fff; background:var(--ketchup)}
+
+  .panel-overlay{
+    position:fixed; top:0; right:0; bottom:0; width:min(380px, 100vw);
+    background:var(--surface); color:var(--ink); z-index:210;
+    box-shadow:-8px 0 30px rgba(0,0,0,.25);
+    transform:translateX(100%); transition:transform .25s ease;
+    display:flex; flex-direction:column;
+  }
+  .panel-overlay.open{transform:translateX(0)}
+  .panel-head{
+    display:flex; align-items:center; gap:10px; padding:16px 18px;
+    border-bottom:1px solid var(--line); flex:none;
+  }
+  .panel-head h3{font-family:var(--f-head); font-size:17px; margin:0; font-weight:600}
+  .draft-label{
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-45); margin-right:auto;
+  }
+  .panel-close{
+    border:none; background:none; color:var(--ink-45); font-size:22px; line-height:1; cursor:pointer; padding:0 2px;
+  }
+  .panel-close:hover{color:var(--ink)}
+  .panel-body{overflow-y:auto; padding:6px 18px 30px; flex:1}
+  .panel-group{margin-top:22px; padding-top:18px; border-top:1px solid var(--line)}
+  .panel-group:first-child{margin-top:16px; padding-top:0; border-top:none}
+  .panel-group h4{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent-2); margin:0 0 12px;
+  }
+  .field{
+    display:flex; flex-direction:column; gap:5px; font-family:var(--f-ui); font-size:12.5px;
+    font-weight:600; color:var(--ink-70); margin-bottom:12px;
+  }
+  .field select, .field input[type="range"]{
+    font:inherit; font-family:var(--f-ui); padding:7px 8px; border:1px solid var(--line); border-radius:3px;
+    background:var(--bg); color:var(--ink); width:100%;
+  }
+  .field.slider{flex-direction:column}
+  .field input[type="range"]{padding:0; accent-color:var(--accent)}
+  .check{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-70);
+    margin-bottom:8px; cursor:pointer;
+  }
+  .panel-btn{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    background:var(--ink); color:var(--surface); border:none; border-radius:3px;
+    padding:9px 14px; cursor:pointer; margin-bottom:8px;
+  }
+  .panel-btn:hover{background:var(--accent)}
+  .panel-textarea{
+    width:100%; font-family:var(--f-body); font-size:12.5px; color:var(--ink);
+    border:1px solid var(--line); border-radius:3px; padding:9px; background:var(--bg);
+    resize:vertical;
+  }
+  .panel-row{display:flex; align-items:center; gap:10px; margin-top:8px}
+  .notes-status{font-family:var(--font-mono); font-size:10.5px; color:var(--avocado)}
+  .panel-hint{font-size:11.5px; color:var(--ink-45); line-height:1.5; margin-top:10px}
+  .panel-hint code{font-family:var(--font-mono); font-size:10.5px}
+  .build-note{font-size:12.5px; color:var(--ink-70); line-height:1.6; margin:0}
+  .build-note code{font-family:var(--font-mono); font-size:11px}
+  .build-list{list-style:none; margin:0; padding:0; font-size:12.5px}
+  .build-list li{padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:10px}
+  .build-list li:last-child{border-bottom:none}
+  .build-list a{color:var(--accent); text-decoration:none}
+  .build-list a:hover{text-decoration:underline}
+  .build-empty{color:var(--ink-45)}
+
+  .specimen{display:flex; flex-direction:column; gap:10px}
+  .specimen p{margin:0}
+  .spec-display{font-family:var(--f-display); font-weight:var(--w-display); font-size:28px; line-height:1.15}
+  .spec-head{font-family:var(--f-head); font-weight:var(--w-head); font-size:18px}
+  .spec-body{font-family:var(--f-body); font-size:13px; line-height:1.5; color:var(--ink-70)}
+  .spec-ui{font-family:var(--f-ui); font-weight:600; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+
+  /* Draft-only aids */
+  html[data-highlight-placeholders="1"] .card.placeholder{
+    border-color:#C0392B; background:rgba(192,57,43,.06);
+  }
+  html[data-highlight-placeholders="1"] .card.placeholder .label{color:#C0392B}
+  html[data-hires-reminder="1"] .card[data-owned="1"]::before{
+    content:""; position:absolute; top:6px; left:6px; width:9px; height:9px; border-radius:50%;
+    background:#C0392B; border:1.5px solid var(--surface); z-index:3;
+  }
+
+  @media (max-width:460px){
+    .panel-overlay{width:100vw}
+  }
 </style>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<div class="draft-tools" aria-label="Draft tools — not part of the public site">
+  <button type="button" class="draft-icon" id="mobile-toggle" aria-pressed="false" aria-label="View as mobile" title="View as mobile">
+    <svg id="mobile-toggle-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+  </button>
+  <button type="button" class="draft-icon" id="settings-toggle" aria-pressed="false" aria-label="Settings" title="Settings">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+  </button>
+  <button type="button" class="draft-icon" id="claude-toggle" aria-pressed="false" aria-label="Claude notes" title="Claude">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 6.3L21 12l-6.8 2.7L12 21l-2.2-6.3L3 12l6.8-2.7L12 3z"></path></svg>
+  </button>
+</div>
+
+<div id="page-shell">
 
 <header class="top">
   <div class="wrap">
@@ -531,6 +719,199 @@
       <p>Send through photos, screenshots or links of looks, palettes and rooms you like and they'll get pinned here.</p>
     </div>
   </main>
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span id="build-badge-foot">Draft build v0.1 · 15 Nov 2026</span>
+  </div>
+</footer>
+
+</div><!-- /#page-shell -->
+
+<div class="panel-overlay" id="panel-settings" aria-hidden="true">
+  <div class="panel-head">
+    <h3>Settings</h3>
+    <span class="draft-label">Not part of the public site</span>
+    <button type="button" class="panel-close" id="settings-close" aria-label="Close settings">×</button>
+  </div>
+  <div class="panel-body">
+
+    <section class="panel-group">
+      <h4>Typography</h4>
+      <label class="field">Display font
+        <select id="set-f-display"></select>
+      </label>
+      <label class="field">Heading font
+        <select id="set-f-head"></select>
+      </label>
+      <label class="field">Body font
+        <select id="set-f-body"></select>
+      </label>
+      <label class="field">Labels / nav / buttons font
+        <select id="set-f-ui"></select>
+      </label>
+      <label class="field">Display weight
+        <select id="set-w-display">
+          <option value="300">Light</option>
+          <option value="400">Regular</option>
+          <option value="500">Medium</option>
+          <option value="700" selected>Bold (default)</option>
+        </select>
+      </label>
+      <label class="field">Heading weight
+        <select id="set-w-head">
+          <option value="300">Light</option>
+          <option value="400">Regular</option>
+          <option value="500">Medium</option>
+          <option value="600" selected>Semibold (default)</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Size &amp; spacing</h4>
+      <label class="field slider">Overall text size
+        <input type="range" id="set-k-all" min="0.8" max="1.3" step="0.01" value="1">
+      </label>
+      <label class="field slider">Body size
+        <input type="range" id="set-k-body" min="0.8" max="1.4" step="0.01" value="1">
+      </label>
+      <label class="field slider">Heading size
+        <input type="range" id="set-k-head" min="0.8" max="1.4" step="0.01" value="1">
+      </label>
+      <label class="field slider">Display size
+        <input type="range" id="set-k-display" min="0.8" max="1.6" step="0.01" value="1">
+      </label>
+      <label class="field slider">Line spacing
+        <input type="range" id="set-lh" min="1.2" max="2" step="0.01" value="1.5">
+      </label>
+      <label class="field slider">Section spacing
+        <input type="range" id="set-k-space" min="0.6" max="1.6" step="0.01" value="1">
+      </label>
+      <label class="field">Content width
+        <select id="set-wrap-w">
+          <option value="880">Narrow</option>
+          <option value="1180" selected>Standard</option>
+          <option value="1440">Wide</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Look &amp; feel</h4>
+      <label class="field">Appearance
+        <select id="set-mode">
+          <option value="light" selected>Light</option>
+          <option value="dark">Dark</option>
+          <option value="system">Match this device</option>
+        </select>
+      </label>
+      <label class="field">Accent colour
+        <select id="set-accent">
+          <option value="ketchup" selected>Ketchup (brand default)</option>
+          <option value="avocado">Avocado</option>
+          <option value="ink">Ink</option>
+          <option value="slate">Slate</option>
+        </select>
+      </label>
+      <label class="field">Label style
+        <select id="set-labels">
+          <option value="upper" selected>UPPERCASE spaced</option>
+          <option value="sentence">Sentence case</option>
+        </select>
+      </label>
+      <label class="field">Animation
+        <select id="set-anim">
+          <option value="full" selected>Full</option>
+          <option value="reduced">Reduced</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Presets</h4>
+      <label class="field">Preset
+        <select id="set-preset">
+          <option value="" selected>— choose a preset —</option>
+          <option value="brand">Brand default</option>
+          <option value="soft">Soft &amp; friendly</option>
+          <option value="serif">Classic serif headings</option>
+          <option value="mono">Mono &amp; minimal</option>
+          <option value="warm">Warm &amp; bold</option>
+          <option value="accessible">Large &amp; clear (accessibility)</option>
+        </select>
+      </label>
+      <button type="button" class="panel-btn" id="set-reset">Reset to defaults</button>
+    </section>
+
+    <section class="panel-group">
+      <h4>Copy settings</h4>
+      <button type="button" class="panel-btn" id="set-copy">Copy settings to clipboard</button>
+      <textarea id="set-copy-box" class="panel-textarea" rows="5" readonly placeholder="Click “Copy settings” to fill this in, then paste it back to Claude in chat to apply it as the new default."></textarea>
+    </section>
+
+    <section class="panel-group">
+      <h4>Type specimen</h4>
+      <div class="specimen">
+        <p class="spec-display">Aa Display 42</p>
+        <p class="spec-head">Aa Heading 26</p>
+        <p class="spec-body">The quick brown fox jumps over the lazy dog — body text.</p>
+        <p class="spec-ui">LABEL / NAV / BUTTON</p>
+      </div>
+    </section>
+
+    <section class="panel-group">
+      <h4>Preview</h4>
+      <label class="field">Mobile preview device
+        <select id="set-device"></select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Draft-only aids</h4>
+      <label class="check"><input type="checkbox" id="tog-placeholders"> Highlight placeholders in red</label>
+      <label class="check"><input type="checkbox" id="tog-hires"> Show hi-res photo reminder dots</label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Build</h4>
+      <p class="build-note" id="build-note">Draft build v0.1 · 15 Nov 2026. Earlier builds are archived in the <code>Build History</code> folder of this repo.</p>
+    </section>
+
+  </div>
+</div>
+
+<div class="panel-overlay" id="panel-claude" aria-hidden="true">
+  <div class="panel-head">
+    <h3>Claude</h3>
+    <span class="draft-label">Not part of the public site</span>
+    <button type="button" class="panel-close" id="claude-close" aria-label="Close Claude panel">×</button>
+  </div>
+  <div class="panel-body">
+    <section class="panel-group">
+      <h4>Notes for the next build</h4>
+      <textarea id="claude-notes" class="panel-textarea" rows="8" placeholder="Jot review notes and change requests here while you're looking at this build. Copy them across to Claude when you're ready for the next version."></textarea>
+      <div class="panel-row">
+        <button type="button" class="panel-btn" id="claude-notes-copy">Copy notes</button>
+        <span class="notes-status" id="claude-notes-status"></span>
+      </div>
+      <p class="panel-hint">
+        This is a static GitHub Pages site, so it has no way to commit to the repo on its own —
+        notes typed here are saved only in this browser (<code>localStorage</code>). Use “Copy notes”
+        and paste them into a message to Claude; they'll be folded into <code>NOTES.md</code> in the
+        repo and read from there at the start of the next build.
+      </p>
+    </section>
+    <section class="panel-group">
+      <h4>Current build</h4>
+      <p class="build-note" id="build-note-claude">Draft build v0.1 · 15 Nov 2026</p>
+    </section>
+    <section class="panel-group">
+      <h4>Previous builds</h4>
+      <ul class="build-list" id="build-list"><li class="build-empty">This is the first build.</li></ul>
+    </section>
+  </div>
 </div>
 
 <script>
@@ -883,6 +1264,7 @@
   function buildCard(item, key, opts){
     opts = opts || {};
     var card = el("div", "card");
+    card.dataset.owned = item.owned ? "1" : "0";
 
     var shot = el("div", "shot");
     shot.appendChild(el("span", "tag", opts.tag || item.code));
@@ -1460,5 +1842,344 @@
   render();
   route();
   updateCollapseAllBtn();
+
+  // ================= Draft tooling =================
+  // Settings panel, Claude notes panel, and the view-as-mobile toggle.
+  // None of this is part of the public schedule — see --public build
+  // notes in NOTES.md if this ever needs stripping out for launch.
+  (function(){
+
+    var FONTS = [
+      {id:"brand-lora",   label:"Lora (brand default)",   family:"'Lora', Georgia, 'Times New Roman', serif", google:null},
+      {id:"brand-inter",  label:"Inter (brand default)",  family:"'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", google:null},
+      {id:"system",       label:"System default",         family:"-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", google:null},
+      {id:"century-gothic", label:"Century Gothic",       family:"'Century Gothic', Futura, sans-serif", google:null},
+      {id:"nunito",       label:"Nunito",                 family:"'Nunito', sans-serif", google:"Nunito:wght@400;500;600;700"},
+      {id:"quicksand",    label:"Quicksand",               family:"'Quicksand', sans-serif", google:"Quicksand:wght@400;500;600;700"},
+      {id:"varela-round", label:"Varela Round",            family:"'Varela Round', sans-serif", google:"Varela+Round"},
+      {id:"fredoka",      label:"Fredoka",                 family:"'Fredoka', sans-serif", google:"Fredoka:wght@400;500;600;700"},
+      {id:"figtree",      label:"Figtree",                 family:"'Figtree', sans-serif", google:"Figtree:wght@400;500;600;700"},
+      {id:"dm-sans",      label:"DM Sans",                 family:"'DM Sans', sans-serif", google:"DM+Sans:wght@400;500;600;700"},
+      {id:"outfit",       label:"Outfit",                  family:"'Outfit', sans-serif", google:"Outfit:wght@400;500;600;700"},
+      {id:"manrope",      label:"Manrope",                 family:"'Manrope', sans-serif", google:"Manrope:wght@400;500;600;700"},
+      {id:"poppins",      label:"Poppins",                 family:"'Poppins', sans-serif", google:"Poppins:wght@400;500;600;700"},
+      {id:"fraunces",     label:"Fraunces",                family:"'Fraunces', serif", google:"Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400"}
+    ];
+
+    var DEVICES = [
+      {id:"iphone16",    label:"iPhone 16 (393×852)",     w:393, h:852},
+      {id:"iphone-se",   label:"iPhone SE (375×667)",     w:375, h:667},
+      {id:"galaxy-s24",  label:"Galaxy S24 (360×780)",    w:360, h:780},
+      {id:"pixel9",      label:"Pixel 9 (412×915)",       w:412, h:915}
+    ];
+
+    var BASE_DEFAULTS = {
+      fDisplay:"brand-lora", fHead:"brand-lora", fBody:"brand-inter", fUi:"brand-inter",
+      wDisplay:700, wHead:600,
+      kAll:1, kBody:1, kHead:1, kDisplay:1, kSpace:1, lh:1.5, wrapW:1180,
+      mode:"light", accent:"ketchup", labels:"upper", anim:"full",
+      device:"iphone16", mobilePreview:false, highlightPlaceholders:false, hiresReminder:false
+    };
+
+    var PRESETS = {
+      brand:      Object.assign({}, BASE_DEFAULTS),
+      soft:       Object.assign({}, BASE_DEFAULTS, {fDisplay:"fredoka", fHead:"quicksand", fBody:"nunito", fUi:"nunito", wDisplay:600, wHead:600, kBody:1.05, kDisplay:0.95, kSpace:1.1, lh:1.6, accent:"avocado", labels:"sentence"}),
+      serif:      Object.assign({}, BASE_DEFAULTS, {fDisplay:"fraunces", fHead:"fraunces", kHead:1.05, kDisplay:1.1, lh:1.55}),
+      mono:       Object.assign({}, BASE_DEFAULTS, {fDisplay:"outfit", fHead:"outfit", fBody:"dm-sans", fUi:"dm-sans", wHead:500, kAll:0.95, kHead:0.95, kDisplay:0.9, kSpace:0.85, lh:1.45, accent:"ink"}),
+      warm:       Object.assign({}, BASE_DEFAULTS, {fBody:"figtree", fUi:"figtree", wHead:700, kAll:1.05, kHead:1.05, kDisplay:1.1, kSpace:1.1, accent:"avocado"}),
+      accessible: Object.assign({}, BASE_DEFAULTS, {fHead:"manrope", fBody:"manrope", fUi:"manrope", wHead:700, kAll:1.2, kBody:1.15, kHead:1.1, kDisplay:1.1, kSpace:1.2, lh:1.7, labels:"sentence", anim:"reduced"})
+    };
+
+    var SETTINGS_KEY = "new-home-schedule:settings";
+    var NOTES_KEY = "new-home-schedule:notes";
+    var loadedFonts = {};
+    var state = loadState();
+
+    function loadState(){
+      var saved = null;
+      try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); } catch(e){}
+      return Object.assign({}, BASE_DEFAULTS, saved || {});
+    }
+    function saveState(){
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state)); } catch(e){}
+    }
+
+    function fontById(id){
+      var hit = FONTS.filter(function(f){ return f.id === id; })[0];
+      return hit || FONTS[0];
+    }
+    function ensureGoogleFont(id){
+      var f = fontById(id);
+      if (!f.google || loadedFonts[f.google]) return;
+      loadedFonts[f.google] = true;
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=" + f.google + "&display=swap";
+      document.head.appendChild(link);
+    }
+
+    function deviceById(id){
+      var hit = DEVICES.filter(function(d){ return d.id === id; })[0];
+      return hit || DEVICES[0];
+    }
+
+    function applySettings(){
+      ensureGoogleFont(state.fDisplay); ensureGoogleFont(state.fHead);
+      ensureGoogleFont(state.fBody); ensureGoogleFont(state.fUi);
+      var root = document.documentElement;
+      root.style.setProperty("--f-display", fontById(state.fDisplay).family);
+      root.style.setProperty("--f-head", fontById(state.fHead).family);
+      root.style.setProperty("--f-body", fontById(state.fBody).family);
+      root.style.setProperty("--f-ui", fontById(state.fUi).family);
+      root.style.setProperty("--w-display", state.wDisplay);
+      root.style.setProperty("--w-head", state.wHead);
+      root.style.setProperty("--k-all", state.kAll);
+      root.style.setProperty("--k-body", state.kBody);
+      root.style.setProperty("--k-head", state.kHead);
+      root.style.setProperty("--k-display", state.kDisplay);
+      root.style.setProperty("--k-space", state.kSpace);
+      root.style.setProperty("--lh", state.lh);
+      root.style.setProperty("--wrap-w", state.wrapW + "px");
+
+      var effectiveMode = state.mode;
+      if (effectiveMode === "system"){
+        effectiveMode = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+      }
+      root.setAttribute("data-mode", effectiveMode);
+      root.setAttribute("data-accent", state.accent);
+      root.setAttribute("data-labels", state.labels);
+      root.setAttribute("data-anim", state.anim);
+      root.setAttribute("data-highlight-placeholders", state.highlightPlaceholders ? "1" : "0");
+      root.setAttribute("data-hires-reminder", state.hiresReminder ? "1" : "0");
+
+      var d = deviceById(state.device);
+      root.style.setProperty("--device-w", d.w + "px");
+      root.style.setProperty("--device-h", d.h + "px");
+    }
+
+    function syncForm(){
+      setVal("set-f-display", state.fDisplay); setVal("set-f-head", state.fHead);
+      setVal("set-f-body", state.fBody); setVal("set-f-ui", state.fUi);
+      setVal("set-w-display", String(state.wDisplay)); setVal("set-w-head", String(state.wHead));
+      setVal("set-k-all", state.kAll); setVal("set-k-body", state.kBody);
+      setVal("set-k-head", state.kHead); setVal("set-k-display", state.kDisplay);
+      setVal("set-lh", state.lh); setVal("set-k-space", state.kSpace);
+      setVal("set-wrap-w", String(state.wrapW));
+      setVal("set-mode", state.mode); setVal("set-accent", state.accent);
+      setVal("set-labels", state.labels); setVal("set-anim", state.anim);
+      setVal("set-device", state.device);
+      setChecked("tog-placeholders", state.highlightPlaceholders);
+      setChecked("tog-hires", state.hiresReminder);
+    }
+    function setVal(id, v){ var el = document.getElementById(id); if (el) el.value = v; }
+    function setChecked(id, v){ var el = document.getElementById(id); if (el) el.checked = !!v; }
+    function setText(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; }
+
+    function populateSelect(id, defaultId){
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      FONTS.forEach(function(f){
+        var opt = document.createElement("option");
+        opt.value = f.id; opt.textContent = f.label;
+        sel.appendChild(opt);
+      });
+      sel.value = defaultId;
+    }
+    function populateDevices(id){
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      DEVICES.forEach(function(d){
+        var opt = document.createElement("option");
+        opt.value = d.id; opt.textContent = d.label;
+        sel.appendChild(opt);
+      });
+    }
+
+    populateSelect("set-f-display", state.fDisplay);
+    populateSelect("set-f-head", state.fHead);
+    populateSelect("set-f-body", state.fBody);
+    populateSelect("set-f-ui", state.fUi);
+    populateDevices("set-device");
+    syncForm();
+    applySettings();
+
+    if (window.matchMedia){
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){
+        if (state.mode === "system") applySettings();
+      });
+    }
+
+    function bindSelect(id, key, isNumber){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", function(){
+        state[key] = isNumber ? Number(el.value) : el.value;
+        saveState(); applySettings();
+      });
+    }
+    function bindRange(id, key){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", function(){
+        state[key] = Number(el.value);
+        saveState(); applySettings();
+      });
+    }
+    function bindCheck(id, key){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", function(){
+        state[key] = el.checked;
+        saveState(); applySettings();
+      });
+    }
+
+    bindSelect("set-f-display","fDisplay"); bindSelect("set-f-head","fHead");
+    bindSelect("set-f-body","fBody"); bindSelect("set-f-ui","fUi");
+    bindSelect("set-w-display","wDisplay",true); bindSelect("set-w-head","wHead",true);
+    bindRange("set-k-all","kAll"); bindRange("set-k-body","kBody");
+    bindRange("set-k-head","kHead"); bindRange("set-k-display","kDisplay");
+    bindRange("set-lh","lh"); bindRange("set-k-space","kSpace");
+    bindSelect("set-wrap-w","wrapW",true);
+    bindSelect("set-mode","mode"); bindSelect("set-accent","accent");
+    bindSelect("set-labels","labels"); bindSelect("set-anim","anim");
+    bindCheck("tog-placeholders","highlightPlaceholders");
+    bindCheck("tog-hires","hiresReminder");
+
+    document.getElementById("set-device").addEventListener("change", function(e){
+      state.device = e.target.value;
+      saveState(); applySettings();
+    });
+
+    function applyPreset(name){
+      var p = PRESETS[name];
+      if (!p) return;
+      state = Object.assign({}, p, {
+        device: state.device,
+        mobilePreview: state.mobilePreview,
+        highlightPlaceholders: state.highlightPlaceholders,
+        hiresReminder: state.hiresReminder
+      });
+      saveState(); syncForm(); applySettings();
+    }
+    document.getElementById("set-preset").addEventListener("change", function(e){
+      if (e.target.value) applyPreset(e.target.value);
+    });
+    document.getElementById("set-reset").addEventListener("click", function(){
+      applyPreset("brand");
+      document.getElementById("set-preset").value = "";
+    });
+
+    function settingsSummary(){
+      var lines = [
+        "New Home schedule — settings snapshot",
+        "Typography: display=" + fontById(state.fDisplay).label + ", heading=" + fontById(state.fHead).label +
+          ", body=" + fontById(state.fBody).label + ", labels/nav/buttons=" + fontById(state.fUi).label,
+        "Weights: display=" + state.wDisplay + ", heading=" + state.wHead,
+        "Scale: overall=" + state.kAll + ", body=" + state.kBody + ", heading=" + state.kHead +
+          ", display=" + state.kDisplay + ", section spacing=" + state.kSpace + ", line height=" + state.lh,
+        "Content width: " + state.wrapW + "px",
+        "Appearance: " + state.mode + " · accent=" + state.accent + " · labels=" + state.labels + " · animation=" + state.anim
+      ];
+      return lines.join("\n");
+    }
+    document.getElementById("set-copy").addEventListener("click", function(){
+      var text = settingsSummary();
+      document.getElementById("set-copy-box").value = text;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).catch(function(){});
+      }
+    });
+
+    // ---- Notes (Claude panel) ----
+    var notesBox = document.getElementById("claude-notes");
+    try { notesBox.value = localStorage.getItem(NOTES_KEY) || ""; } catch(e){}
+    var notesTimer = null;
+    notesBox.addEventListener("input", function(){
+      try { localStorage.setItem(NOTES_KEY, notesBox.value); } catch(e){}
+      setText("claude-notes-status", "Saved in this browser");
+      clearTimeout(notesTimer);
+      notesTimer = setTimeout(function(){ setText("claude-notes-status", ""); }, 1600);
+    });
+    document.getElementById("claude-notes-copy").addEventListener("click", function(){
+      if (!(navigator.clipboard && navigator.clipboard.writeText)) return;
+      navigator.clipboard.writeText(notesBox.value).then(function(){
+        setText("claude-notes-status", "Copied");
+        setTimeout(function(){ setText("claude-notes-status", ""); }, 1600);
+      }).catch(function(){});
+    });
+
+    // ---- Build version + history (from builds.json, shipped alongside this file) ----
+    fetch("builds.json").then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data || !data.builds || !data.builds.length) return;
+        var current = data.builds[data.builds.length - 1];
+        var label = "Draft build v" + current.version + " · " + current.date;
+        setText("build-badge-foot", label);
+        setText("build-note", label + ". Earlier builds are archived in the Build History folder of this repo.");
+        setText("build-note-claude", label);
+        var list = document.getElementById("build-list");
+        var prev = data.builds.slice(0, -1).reverse();
+        if (!prev.length){ return; }
+        list.innerHTML = "";
+        prev.forEach(function(b){
+          var li = document.createElement("li");
+          var a = document.createElement("a");
+          a.href = "Build History/index_v" + b.version + "_" + b.date + ".html";
+          a.textContent = "v" + b.version;
+          var span = document.createElement("span");
+          span.textContent = b.date;
+          li.appendChild(a); li.appendChild(span);
+          list.appendChild(li);
+        });
+      }).catch(function(){});
+
+    // ---- Panels (mutually exclusive, non-blocking) ----
+    var settingsPanel = document.getElementById("panel-settings");
+    var claudePanel = document.getElementById("panel-claude");
+    var settingsToggle = document.getElementById("settings-toggle");
+    var claudeToggle = document.getElementById("claude-toggle");
+
+    function closePanels(){
+      settingsPanel.classList.remove("open"); settingsPanel.setAttribute("aria-hidden","true");
+      claudePanel.classList.remove("open"); claudePanel.setAttribute("aria-hidden","true");
+      settingsToggle.setAttribute("aria-pressed","false");
+      claudeToggle.setAttribute("aria-pressed","false");
+    }
+    function openPanel(which){
+      var alreadyOpen = (which === "settings" && settingsPanel.classList.contains("open")) ||
+                         (which === "claude" && claudePanel.classList.contains("open"));
+      closePanels();
+      if (alreadyOpen) return;
+      if (which === "settings"){
+        settingsPanel.classList.add("open"); settingsPanel.setAttribute("aria-hidden","false");
+        settingsToggle.setAttribute("aria-pressed","true");
+      } else {
+        claudePanel.classList.add("open"); claudePanel.setAttribute("aria-hidden","false");
+        claudeToggle.setAttribute("aria-pressed","true");
+      }
+    }
+    settingsToggle.addEventListener("click", function(){ openPanel("settings"); });
+    claudeToggle.addEventListener("click", function(){ openPanel("claude"); });
+    document.getElementById("settings-close").addEventListener("click", closePanels);
+    document.getElementById("claude-close").addEventListener("click", closePanels);
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") closePanels(); });
+
+    // ---- View as mobile ----
+    var mobileToggle = document.getElementById("mobile-toggle");
+    var mobileIcon = document.getElementById("mobile-toggle-icon");
+    var PHONE_ICON = '<rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line>';
+    var DESKTOP_ICON = '<rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>';
+    function setMobilePreview(on){
+      state.mobilePreview = on;
+      saveState();
+      document.documentElement.setAttribute("data-devicepreview", on ? "1" : "0");
+      mobileToggle.setAttribute("aria-pressed", on ? "true" : "false");
+      mobileIcon.innerHTML = on ? DESKTOP_ICON : PHONE_ICON;
+    }
+    mobileToggle.addEventListener("click", function(){ setMobilePreview(!state.mobilePreview); });
+    setMobilePreview(!!state.mobilePreview);
+
+  })();
 })();
 </script>

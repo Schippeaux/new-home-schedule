@@ -1,0 +1,6 @@
+{
+  "builds": [
+    { "version": "0.0", "date": "2026-11-15", "notes": "Last build before the draft-tooling layer (Settings panel, Claude panel, view-as-mobile) was added." },
+    { "version": "0.1", "date": "2026-11-15", "notes": "Added the draft-tooling layer: Settings panel (typography, size & spacing, look & feel, presets, type specimen), Claude notes panel with build history, and a view-as-mobile toggle built on CSS container queries." }
+  ]
+}
