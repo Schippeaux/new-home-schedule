@@ -21,14 +21,17 @@ Before shipping a change that touches `index.html`:
 
 ## Notes from the live page
 
-The Claude panel's notes box is **local to the viewer's browser**
-(`localStorage` only) — this is a static GitHub Pages site with no backend,
-so the page itself has no way to commit anything to this repo. When the
-person reviewing a build wants the next version built from their notes,
-they copy them across (the panel's "Copy notes" button) and paste them into
-a message here. Fold anything durable from that into this file or into the
-next commit's message — there's no `notes.md` auto-synced from the page to
-read instead.
+The Claude panel's "Save to GitHub" button pushes the notes box straight to
+**`NOTES_INBOX.md`** in this repo via the GitHub Contents API, using a
+personal access token the person pastes into the panel (kept only in that
+browser's `localStorage`, scoped ideally to just this repo). The textarea
+also keeps a local draft in `localStorage` between saves, but the thing that
+actually reaches this repo is `NOTES_INBOX.md`.
+
+**At the start of any session working on this repo: pull, then read
+`NOTES_INBOX.md`** if it exists — that's reviewer feedback waiting to be
+acted on. Once it's been read and actioned, clear it out (empty the file or
+delete it) so stale notes don't get re-read and re-applied next time.
 
 ## A `--public` build
 

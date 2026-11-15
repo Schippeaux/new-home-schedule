@@ -1,6 +1,7 @@
 {
   "builds": [
     { "version": "0.0", "date": "2026-11-15", "notes": "Last build before the draft-tooling layer (Settings panel, Claude panel, view-as-mobile) was added." },
-    { "version": "0.1", "date": "2026-11-15", "notes": "Added the draft-tooling layer: Settings panel (typography, size & spacing, look & feel, presets, type specimen), Claude notes panel with build history, and a view-as-mobile toggle built on CSS container queries." }
+    { "version": "0.1", "date": "2026-11-15", "notes": "Added the draft-tooling layer: Settings panel (typography, size & spacing, look & feel, presets, type specimen), Claude notes panel with build history, and a view-as-mobile toggle built on CSS container queries." },
+    { "version": "0.2", "date": "2026-11-15", "notes": "Add/remove items from the schedule (a room + category/new-category form, and a remove control on every card with a Settings > Removed items restore list). Claude panel notes now save straight to NOTES_INBOX.md via the GitHub API (personal access token, stored locally) instead of a copy-to-clipboard button." }
   ]
 }

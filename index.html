@@ -236,6 +236,38 @@
     position:relative;
   }
 
+  /* ---- Remove item ---- */
+  .remove-item{
+    position:absolute; top:6px; right:40px; z-index:2;
+    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+    border:none; background:rgba(255,255,255,.85); border-radius:50%; color:var(--ink-45);
+    cursor:pointer; font-size:12px; line-height:1; -webkit-tap-highlight-color:transparent;
+  }
+  .remove-item:hover{color:#C0392B; background:#fff}
+  #rooms.list-view .remove-item{top:50%; right:44px; transform:translateY(-50%)}
+
+  /* ---- Add-item dialog ---- */
+  #add-item{
+    border:none; padding:0; background:transparent; color:var(--ink);
+    width:min(480px, calc(100vw - 32px)); max-width:none; max-height:calc(100vh - 48px);
+  }
+  #add-item::backdrop{background:rgba(43,38,32,.55)}
+  #add-item .d-wrap{
+    position:relative; background:var(--surface); border-radius:4px; overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.3);
+  }
+  .add-form{
+    padding:26px 26px 24px; display:flex; flex-direction:column; gap:12px;
+    max-height:calc(100vh - 100px); overflow-y:auto;
+  }
+  .add-form h3{font-family:var(--f-head); font-size:19px; margin:0 0 4px; font-weight:var(--w-head)}
+  .add-form .field{margin-bottom:0}
+  .add-form .field input, .add-form .field select{
+    font:inherit; font-family:var(--f-ui); padding:8px 9px; border:1px solid var(--line);
+    border-radius:3px; background:var(--bg); color:var(--ink); width:100%;
+  }
+  .add-submit{margin-top:6px; align-self:flex-start}
+
   /* ---- Bought checkbox ---- */
   .buy{
     position:absolute; top:6px; right:6px; z-index:2;
@@ -487,6 +519,7 @@
     .card.placeholder .pnote{font-size:11px}
     .card.placeholder .pest{font-size:11.5px}
     .buy{top:2px; right:2px}
+    .remove-item{top:2px; right:30px; width:20px; height:20px}
 
     #rooms.list-view .grid{gap:8px}
     #rooms.list-view .card .shot{width:84px; flex-basis:84px}
@@ -603,6 +636,8 @@
   .build-list a{color:var(--accent); text-decoration:none}
   .build-list a:hover{text-decoration:underline}
   .build-empty{color:var(--ink-45)}
+  .build-list .panel-btn{margin:0; padding:5px 10px; font-size:9.5px; flex:none}
+  .build-list li span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 
   .specimen{display:flex; flex-direction:column; gap:10px}
   .specimen p{margin:0}
@@ -671,6 +706,7 @@
 
   <main class="wrap">
     <div class="toolbar">
+      <button type="button" class="collapse-all-btn" id="add-item-btn">+ Add item</button>
       <button type="button" class="collapse-all-btn" id="collapse-all">Collapse all</button>
       <div class="view-switch" role="group" aria-label="View">
         <button type="button" class="view-btn" id="view-grid" aria-pressed="true">Grid</button>
@@ -698,6 +734,49 @@
   <div class="d-wrap">
     <button type="button" class="d-close" id="detail-close" aria-label="Close">×</button>
     <div id="detail-body"></div>
+  </div>
+</dialog>
+
+<dialog id="add-item" aria-label="Add an item">
+  <div class="d-wrap">
+    <button type="button" class="d-close" id="add-item-close" aria-label="Close">×</button>
+    <form id="add-item-form" class="add-form">
+      <h3>Add an item</h3>
+      <label class="field">Room
+        <select id="add-room" required></select>
+      </label>
+      <label class="field">Category
+        <select id="add-cat" required></select>
+      </label>
+      <label class="field" id="add-cat-new-wrap">New category name
+        <input type="text" id="add-cat-new" placeholder="e.g. Lighting">
+      </label>
+      <label class="field">Name
+        <input type="text" id="add-name" required placeholder="e.g. Floor lamp">
+      </label>
+      <label class="field">Brand
+        <input type="text" id="add-brand" placeholder="optional">
+      </label>
+      <label class="field">Material / colour
+        <input type="text" id="add-material" placeholder="optional">
+      </label>
+      <label class="field">Dimensions
+        <input type="text" id="add-dims" placeholder="optional">
+      </label>
+      <label class="field">Price (AUD)
+        <input type="number" id="add-price" min="0" step="0.01" placeholder="optional">
+      </label>
+      <label class="field">Product URL
+        <input type="url" id="add-url" placeholder="optional">
+      </label>
+      <label class="field">Image URL
+        <input type="url" id="add-img" placeholder="optional — shows a plain placeholder otherwise">
+      </label>
+      <label class="field">Note
+        <input type="text" id="add-note" placeholder="optional">
+      </label>
+      <button type="submit" class="panel-btn add-submit">Add to schedule</button>
+    </form>
   </div>
 </dialog>
 
@@ -875,6 +954,11 @@
     </section>
 
     <section class="panel-group">
+      <h4>Removed items</h4>
+      <ul class="build-list" id="removed-list"><li class="build-empty">Nothing removed.</li></ul>
+    </section>
+
+    <section class="panel-group">
       <h4>Build</h4>
       <p class="build-note" id="build-note">Draft build v0.1 · 15 Nov 2026. Earlier builds are archived in the <code>Build History</code> folder of this repo.</p>
     </section>
@@ -891,16 +975,30 @@
   <div class="panel-body">
     <section class="panel-group">
       <h4>Notes for the next build</h4>
-      <textarea id="claude-notes" class="panel-textarea" rows="8" placeholder="Jot review notes and change requests here while you're looking at this build. Copy them across to Claude when you're ready for the next version."></textarea>
+      <textarea id="claude-notes" class="panel-textarea" rows="8" placeholder="Jot review notes and change requests here while you're looking at this build, then Save to GitHub when you're ready for the next version."></textarea>
       <div class="panel-row">
-        <button type="button" class="panel-btn" id="claude-notes-copy">Copy notes</button>
+        <button type="button" class="panel-btn" id="claude-notes-save">Save to GitHub</button>
         <span class="notes-status" id="claude-notes-status"></span>
       </div>
       <p class="panel-hint">
-        This is a static GitHub Pages site, so it has no way to commit to the repo on its own —
-        notes typed here are saved only in this browser (<code>localStorage</code>). Use “Copy notes”
-        and paste them into a message to Claude; they'll be folded into <code>NOTES.md</code> in the
-        repo and read from there at the start of the next build.
+        Saves straight to <code>NOTES_INBOX.md</code> in this repo (needs the token below). Claude
+        reads that file at the start of the next session and acts on it — no copy-pasting needed.
+        A draft is also kept in this browser between saves.
+      </p>
+    </section>
+    <section class="panel-group">
+      <h4>GitHub access</h4>
+      <label class="field">Personal access token
+        <input type="password" id="gh-token-input" placeholder="github_pat_… or ghp_…" autocomplete="off">
+      </label>
+      <span class="notes-status" id="gh-token-status"></span>
+      <p class="panel-hint">
+        Stored only in this browser (<code>localStorage</code>) and sent straight to
+        <code>api.github.com</code> when you save notes — nowhere else. Use a
+        <strong>fine-grained token</strong> scoped to just the
+        <code>Schippeaux/new-home-schedule</code> repo, with "Contents: Read and write"
+        permission, so a leaked token can't reach anything beyond this repo. Create one at
+        GitHub → Settings → Developer settings → Fine-grained tokens.
       </p>
     </section>
     <section class="panel-group">
@@ -1114,16 +1212,90 @@
     return e;
   }
 
+  // Items added from the "+ Add item" form live only in this browser,
+  // nested the same way as ITEMS: customItems[roomId][category] = [item].
+  var CUSTOM_KEY = "new-home-schedule:custom-items";
+  var customItems = {};
+  try { customItems = JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {}; } catch(e){}
+  function saveCustomItems(){
+    try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customItems)); } catch(e){}
+  }
+  function addCustomItem(roomId, cat, item){
+    if (!customItems[roomId]) customItems[roomId] = {};
+    if (!customItems[roomId][cat]) customItems[roomId][cat] = [];
+    customItems[roomId][cat].push(item);
+    saveCustomItems();
+  }
+  function removeCustomItem(roomId, cat, id){
+    if (!customItems[roomId] || !customItems[roomId][cat]) return;
+    customItems[roomId][cat] = customItems[roomId][cat].filter(function(i){ return i.id !== id; });
+    saveCustomItems();
+  }
+
+  // Items removed from the schedule (built-in or custom) are hidden, not
+  // deleted outright — key -> {room, cat, name} so Settings can list and
+  // restore them. Keyed the same way as itemKey() below.
+  var REMOVED_KEY = "new-home-schedule:removed";
+  var removedItems = {};
+  try { removedItems = JSON.parse(localStorage.getItem(REMOVED_KEY)) || {}; } catch(e){}
+  function saveRemovedItems(){
+    try { localStorage.setItem(REMOVED_KEY, JSON.stringify(removedItems)); } catch(e){}
+  }
+  function isRemoved(key){ return !!removedItems[key]; }
+  function markRemoved(key, info){ removedItems[key] = info; saveRemovedItems(); renderRemovedList(); }
+  function restoreRemoved(key){
+    delete removedItems[key];
+    saveRemovedItems();
+    renderRemovedList();
+    render(); route(); updateCollapseAllBtn();
+  }
+
+  function renderRemovedList(){
+    var box = document.getElementById("removed-list");
+    if (!box) return;
+    var keys = Object.keys(removedItems);
+    if (!keys.length){
+      box.innerHTML = '<li class="build-empty">Nothing removed.</li>';
+      return;
+    }
+    box.innerHTML = "";
+    keys.forEach(function(k){
+      var info = removedItems[k];
+      var li = document.createElement("li");
+      li.appendChild(el("span", null, info.room + " · " + info.cat + " · " + info.name));
+      var btn = el("button", "panel-btn", "Restore");
+      btn.type = "button";
+      btn.addEventListener("click", function(){ restoreRemoved(k); });
+      li.appendChild(btn);
+      box.appendChild(li);
+    });
+  }
+
+  var PLACEHOLDER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150">' +
+    '<rect width="200" height="150" fill="#E4E0D8"/>' +
+    '<text x="100" y="80" font-family="sans-serif" font-size="13" fill="#8C8740" text-anchor="middle">No photo</text></svg>';
+  var PLACEHOLDER_IMG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PLACEHOLDER_SVG);
+
+  // Every sourced item for a room/category — built-in plus custom,
+  // minus anything removed. sourcedNames() and slotsFor() both read
+  // through this so adding or removing an item is visible everywhere
+  // (counts, totals, "already sourced" checks) with one change.
+  function mergedItems(roomId, cat){
+    var base = ((ITEMS[roomId] || {})[cat]) || [];
+    var custom = ((customItems[roomId] || {})[cat]) || [];
+    return base.concat(custom).filter(function(item){
+      return !isRemoved(itemKey(roomId, cat, item.name));
+    });
+  }
+
   function sourcedNames(roomId, cat){
-    var cats = ITEMS[roomId] || {};
-    var list = cats[cat] || [];
-    return list.map(function(i){ return (i.fulfills || i.name).trim().toLowerCase(); });
+    return mergedItems(roomId, cat).map(function(i){ return (i.fulfills || i.name).trim().toLowerCase(); });
   }
 
   // Group a category's sourced items into slots: {name, options[]}.
   function slotsFor(roomId, cat){
     var out = [], byName = {};
-    ((ITEMS[roomId] || {})[cat] || []).forEach(function(item){
+    mergedItems(roomId, cat).forEach(function(item){
       var name = item.fulfills || item.name;
       var k = name.trim().toLowerCase();
       if (!byName[k]){ byName[k] = { name:name, options:[] }; out.push(byName[k]); }
@@ -1151,7 +1323,9 @@
 
   function roomItemCount(roomId){
     var n = 0;
-    Object.keys(ITEMS[roomId] || {}).forEach(function(c){ n += slotsFor(roomId, c).length; });
+    var cats = Object.keys(ITEMS[roomId] || {});
+    Object.keys(customItems[roomId] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+    cats.forEach(function(c){ n += slotsFor(roomId, c).length; });
     return n;
   }
 
@@ -1161,7 +1335,7 @@
     Object.keys(roomData.categories).forEach(function(cat){
       var done = sourcedNames(roomData.id, cat);
       roomData.categories[cat].forEach(function(it){
-        if (done.indexOf(it.name.trim().toLowerCase()) === -1) n++;
+        if (done.indexOf(it.name.trim().toLowerCase()) === -1 && !isRemoved(itemKey(roomData.id, cat, it.name))) n++;
       });
     });
     return n;
@@ -1203,6 +1377,7 @@
       var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
       var cats = pd ? Object.keys(pd.categories).slice() : [];
       Object.keys(ITEMS[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+      Object.keys(customItems[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
       cats.forEach(function(c){ keys.push(r.id + "|" + c); });
     });
     return keys;
@@ -1259,8 +1434,26 @@
     });
   }
 
-  // opts (optional): {href, pill, view, tag} override the product link
-  // for multi-option slots and the options page.
+  // Shared "remove this" control for both sourced and placeholder cards.
+  // onRemove does the actual bookkeeping (and its own re-render); this
+  // just asks for confirmation first.
+  function addRemoveBtn(card, label, onRemove){
+    var rm = el("button", "remove-item", "✕");
+    rm.type = "button";
+    rm.title = "Remove this item";
+    rm.setAttribute("aria-label", "Remove " + label);
+    rm.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if (!confirm('Remove "' + label + '"? You can restore it later from Settings → Removed items.')) return;
+      onRemove();
+    });
+    card.appendChild(rm);
+  }
+
+  // opts (optional): {href, pill, view, tag, remove, removeLabel} override
+  // the product link for multi-option slots/the options page, and add a
+  // remove control when a remove() callback is supplied.
   function buildCard(item, key, opts){
     opts = opts || {};
     var card = el("div", "card");
@@ -1314,6 +1507,7 @@
     }
     card.appendChild(body);
     if (key) addBuyBox(card, key, item.name);
+    if (opts.remove) addRemoveBtn(card, opts.removeLabel || item.name, opts.remove);
 
     return card;
   }
@@ -1372,7 +1566,7 @@
     d.addEventListener("click", function(e){ if (e.target === d) d.close(); });
   })();
 
-  function buildPlaceholder(name, note, est, key){
+  function buildPlaceholder(name, note, est, key, removeFn){
     var card = el("div", "card placeholder");
     var shot = el("div", "shot");
     shot.appendChild(el("span", "pname", name));
@@ -1385,6 +1579,7 @@
     shot.appendChild(el("span", "label", "Not sourced yet"));
     card.appendChild(shot);
     addBuyBox(card, key, name);
+    if (removeFn) addRemoveBtn(card, name, removeFn);
     return card;
   }
 
@@ -1397,9 +1592,10 @@
     var pendingCats = pendingData ? pendingData.categories : {};
 
     // union of category names in checklist order, then any category
-    // that only has sourced items.
+    // that only has sourced or custom-added items.
     var catOrder = Object.keys(pendingCats);
     Object.keys(sourcedCats).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
+    Object.keys(customItems[room.id] || {}).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
 
     var sourcedCount = roomItemCount(room.id);
     var pendingCount = roomPendingCount(pendingData);
@@ -1434,16 +1630,36 @@
       slotsFor(room.id, cat).forEach(function(slot){
         var key = itemKey(room.id, cat, slot.name);
         var n = slot.options.length;
-        g.appendChild(buildCard(leadOf(key, slot), key, n > 1 ? {
+        var lead = leadOf(key, slot);
+        var cardOpts = n > 1 ? {
           href: "#options/" + encodeURIComponent(key),
           pill: n + " options",
           view: "Compare " + n + " options →"
-        } : null));
+        } : {};
+        // Multi-option slots are edited one option at a time from the
+        // compare page instead — only a single-option slot removes here.
+        if (n === 1){
+          cardOpts.removeLabel = lead.name;
+          cardOpts.remove = (function(roomId, c, it){
+            return function(){
+              if (it.custom) removeCustomItem(roomId, c, it.id);
+              else markRemoved(itemKey(roomId, c, it.name), {room:room.label, cat:c, name:it.name});
+              render(); route(); updateCollapseAllBtn();
+            };
+          })(room.id, cat, lead);
+        }
+        g.appendChild(buildCard(lead, key, cardOpts));
       });
       var done = sourcedNames(room.id, cat);
       (pendingCats[cat] || []).forEach(function(it){
-        if (done.indexOf(it.name.trim().toLowerCase()) === -1){
-          g.appendChild(buildPlaceholder(it.name, it.note, it.est, itemKey(room.id, cat, it.name)));
+        var pKey = itemKey(room.id, cat, it.name);
+        if (done.indexOf(it.name.trim().toLowerCase()) === -1 && !isRemoved(pKey)){
+          g.appendChild(buildPlaceholder(it.name, it.note, it.est, pKey, (function(roomId, c, name){
+            return function(){
+              markRemoved(itemKey(roomId, c, name), {room:room.label, cat:c, name:name});
+              render(); route(); updateCollapseAllBtn();
+            };
+          })(room.id, cat, it.name)));
         }
       });
       details.appendChild(g);
@@ -1459,7 +1675,9 @@
       sourced += roomItemCount(r.id);
       all += roomItemCount(r.id) + roomPendingCount(pd);
 
-      Object.keys(ITEMS[r.id] || {}).forEach(function(c){
+      var cats = Object.keys(ITEMS[r.id] || {});
+      Object.keys(customItems[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+      cats.forEach(function(c){
         slotsFor(r.id, c).forEach(function(slot){
           confirmed += leadOf(itemKey(r.id, c, slot.name), slot).price || 0;
         });
@@ -1469,7 +1687,7 @@
         Object.keys(pd.categories).forEach(function(cat){
           var done = sourcedNames(r.id, cat);
           pd.categories[cat].forEach(function(it){
-            if (done.indexOf(it.name.trim().toLowerCase()) === -1){
+            if (done.indexOf(it.name.trim().toLowerCase()) === -1 && !isRemoved(itemKey(r.id, cat, it.name))){
               estimate += (it.est || 0);
             }
           });
@@ -1551,7 +1769,18 @@
     var g = el("div", "grid");
     slot.options.forEach(function(item, i){
       var isLead = item === lead;
-      var card = buildCard(item, null, { tag: "Option " + String.fromCharCode(65 + i) });
+      var card = buildCard(item, null, {
+        tag: "Option " + String.fromCharCode(65 + i),
+        removeLabel: item.name,
+        remove: function(){
+          if (item.custom) removeCustomItem(room.id, parts[1], item.id);
+          else markRemoved(itemKey(room.id, parts[1], item.name), {room:room.label, cat:parts[1], name:item.name});
+          render();
+          location.hash = room.id;
+          route();
+          updateCollapseAllBtn();
+        }
+      });
       if (isLead) card.classList.add("lead");
 
       var pick = el("label", "lead-pick");
@@ -1839,6 +2068,87 @@
   try { storedView = localStorage.getItem("new-home-schedule:view") || "grid"; } catch(e){}
   setView(storedView);
 
+  // ---- Add item ----
+  function categoriesForRoom(roomId){
+    var pd = PENDING_ROOMS.filter(function(p){ return p.id === roomId; })[0];
+    var cats = pd ? Object.keys(pd.categories).slice() : [];
+    Object.keys(ITEMS[roomId] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+    Object.keys(customItems[roomId] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+    return cats;
+  }
+  function populateAddCatSelect(roomId, keepValue){
+    var sel = document.getElementById("add-cat");
+    sel.innerHTML = "";
+    categoriesForRoom(roomId).forEach(function(c){
+      var opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+    var newOpt = document.createElement("option");
+    newOpt.value = "__new__"; newOpt.textContent = "+ New category…";
+    sel.appendChild(newOpt);
+    if (keepValue && sel.querySelector('option[value="' + CSS.escape(keepValue) + '"]')) sel.value = keepValue;
+    document.getElementById("add-cat-new-wrap").style.display = sel.value === "__new__" ? "" : "none";
+  }
+
+  var addDialog = document.getElementById("add-item");
+  document.getElementById("add-item-btn").addEventListener("click", function(){
+    var roomSel = document.getElementById("add-room");
+    roomSel.innerHTML = "";
+    ROOMS.forEach(function(r){
+      var opt = document.createElement("option");
+      opt.value = r.id; opt.textContent = r.label;
+      roomSel.appendChild(opt);
+    });
+    var activeRoom = ROOMS.filter(function(r){
+      var panel = document.getElementById("panel-" + r.id);
+      return panel && panel.classList.contains("active");
+    })[0] || ROOMS[0];
+    roomSel.value = activeRoom.id;
+    document.getElementById("add-item-form").reset();
+    roomSel.value = activeRoom.id;
+    populateAddCatSelect(activeRoom.id);
+    if (addDialog.showModal) addDialog.showModal(); else addDialog.setAttribute("open", "");
+    document.getElementById("add-name").focus();
+  });
+  document.getElementById("add-item-close").addEventListener("click", function(){ addDialog.close(); });
+  addDialog.addEventListener("click", function(e){ if (e.target === addDialog) addDialog.close(); });
+  document.getElementById("add-room").addEventListener("change", function(e){ populateAddCatSelect(e.target.value); });
+  document.getElementById("add-cat").addEventListener("change", function(e){
+    document.getElementById("add-cat-new-wrap").style.display = e.target.value === "__new__" ? "" : "none";
+  });
+
+  document.getElementById("add-item-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var roomId = document.getElementById("add-room").value;
+    var catSel = document.getElementById("add-cat").value;
+    var cat = catSel === "__new__" ? document.getElementById("add-cat-new").value.trim() : catSel;
+    var name = document.getElementById("add-name").value.trim();
+    if (!roomId || !cat || !name) return;
+    var priceRaw = document.getElementById("add-price").value;
+    var item = {
+      id: "custom-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      code: "ADD",
+      name: name,
+      brand: document.getElementById("add-brand").value.trim() || null,
+      material: document.getElementById("add-material").value.trim() || null,
+      dims: document.getElementById("add-dims").value.trim() || null,
+      price: priceRaw ? Number(priceRaw) : null,
+      currency: "AUD",
+      url: document.getElementById("add-url").value.trim() || null,
+      img: document.getElementById("add-img").value.trim() || PLACEHOLDER_IMG,
+      note: document.getElementById("add-note").value.trim() || null,
+      custom: true
+    };
+    addCustomItem(roomId, cat, item);
+    addDialog.close();
+    render();
+    location.hash = roomId;
+    route();
+    updateCollapseAllBtn();
+  });
+
+  renderRemovedList();
   render();
   route();
   updateCollapseAllBtn();
@@ -2091,23 +2401,77 @@
       }
     });
 
-    // ---- Notes (Claude panel) ----
+    // ---- Notes (Claude panel) — draft kept locally, "Save" pushes to GitHub ----
     var notesBox = document.getElementById("claude-notes");
     try { notesBox.value = localStorage.getItem(NOTES_KEY) || ""; } catch(e){}
     var notesTimer = null;
     notesBox.addEventListener("input", function(){
       try { localStorage.setItem(NOTES_KEY, notesBox.value); } catch(e){}
-      setText("claude-notes-status", "Saved in this browser");
-      clearTimeout(notesTimer);
-      notesTimer = setTimeout(function(){ setText("claude-notes-status", ""); }, 1600);
     });
-    document.getElementById("claude-notes-copy").addEventListener("click", function(){
-      if (!(navigator.clipboard && navigator.clipboard.writeText)) return;
-      navigator.clipboard.writeText(notesBox.value).then(function(){
-        setText("claude-notes-status", "Copied");
-        setTimeout(function(){ setText("claude-notes-status", ""); }, 1600);
-      }).catch(function(){});
+
+    var GH_OWNER = "Schippeaux";
+    var GH_REPO = "new-home-schedule";
+    var GH_BRANCH = "claude/nice-hypatia-wzi05g";
+    var GH_NOTES_PATH = "NOTES_INBOX.md";
+    var GH_TOKEN_KEY = "new-home-schedule:gh-token";
+
+    function getGhToken(){
+      try { return localStorage.getItem(GH_TOKEN_KEY) || ""; } catch(e){ return ""; }
+    }
+    function setGhToken(t){
+      try { localStorage.setItem(GH_TOKEN_KEY, t); } catch(e){}
+    }
+    function b64EncodeUnicode(str){
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    var ghTokenInput = document.getElementById("gh-token-input");
+    try { ghTokenInput.value = getGhToken(); } catch(e){}
+    var ghTokenTimer = null;
+    ghTokenInput.addEventListener("input", function(){
+      setGhToken(ghTokenInput.value.trim());
+      setText("gh-token-status", "Saved");
+      clearTimeout(ghTokenTimer);
+      ghTokenTimer = setTimeout(function(){ setText("gh-token-status", ""); }, 1500);
     });
+
+    function saveNotesToGitHub(){
+      var token = getGhToken();
+      if (!token){
+        setText("claude-notes-status", "Add a GitHub token below first.");
+        return;
+      }
+      var text = notesBox.value;
+      setText("claude-notes-status", "Saving…");
+      var apiUrl = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + GH_NOTES_PATH;
+      var headers = { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" };
+      fetch(apiUrl + "?ref=" + GH_BRANCH, { headers: headers })
+        .then(function(r){ return r.status === 200 ? r.json() : null; })
+        .then(function(existing){
+          var stamp = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+          var body = "# Notes for Claude\n\n_Last saved from the live page: " + stamp + "_\n\n" + text + "\n";
+          var payload = {
+            message: "Notes from draft review — " + stamp,
+            content: b64EncodeUnicode(body),
+            branch: GH_BRANCH
+          };
+          if (existing && existing.sha) payload.sha = existing.sha;
+          return fetch(apiUrl, {
+            method: "PUT",
+            headers: Object.assign({ "Content-Type": "application/json" }, headers),
+            body: JSON.stringify(payload)
+          });
+        })
+        .then(function(r){
+          if (!r.ok) return r.json().then(function(err){ throw new Error(err.message || ("HTTP " + r.status)); });
+          setText("claude-notes-status", "Saved to GitHub ✓");
+          setTimeout(function(){ setText("claude-notes-status", ""); }, 2500);
+        })
+        .catch(function(err){
+          setText("claude-notes-status", "Couldn't save: " + err.message);
+        });
+    }
+    document.getElementById("claude-notes-save").addEventListener("click", saveNotesToGitHub);
 
     // ---- Build version + history (from builds.json, shipped alongside this file) ----
     fetch("builds.json").then(function(r){ return r.ok ? r.json() : null; })
