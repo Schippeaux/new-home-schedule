@@ -19,6 +19,11 @@
       "version": "0.3",
       "date": "2026-11-15",
       "notes": "Cross-device sync: bought ticks, removed items, custom items and leading options are saved to state.json in the repo via the shared GitHub token, and merged per change so devices don't overwrite each other. Status line in the toolbar shows sync state."
+    },
+    {
+      "version": "0.4",
+      "date": "2026-11-15",
+      "notes": "Fix: a tick made right before a refresh (common on phones) could get wiped on reload, and in some cases a merged change could get stuck showing \"Synced\" without ever actually reaching GitHub. The startup pull now 3-way-merges with local changes instead of overwriting them, and the sync baseline is only ever advanced from confirmed GitHub content, never from an unpushed merge."
     }
   ]
 }

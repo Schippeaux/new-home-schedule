@@ -54,3 +54,22 @@ settings panel stay per-browser.
 Sync needs the shared `github-token` in the browser (entered on the home
 page). Without it the page works on this device only and says so in the
 toolbar.
+
+**The startup pull is a merge, not an overwrite.** Don't ever make the
+on-load pull blindly replace local state with whatever's on GitHub — a
+device that ticked something and got refreshed (or just closed the tab)
+before the 1.5s debounce fired would lose that tick. On load, local state
+is diffed against `syncBase` (persisted in `new-home-schedule:sync-base`)
+to find what this device changed since its last confirmed sync, and that
+delta is kept on top of the freshly-fetched remote copy.
+
+**`syncBase` must only ever hold confirmed GitHub content** — the result of
+a GET, or the payload of a successful PUT — never the result of a merge
+that hasn't been pushed yet. If a merge's local-only parts get written into
+`syncBase` before they're actually on GitHub, the next push diffs local
+against that already-merged base, sees no difference, and silently skips
+the PUT — so the change never leaves the device even though the UI says
+"Synced ✓". (This caused the real-world bug where a custom item synced fine
+but bought ticks kept vanishing on refresh — the ticks were colliding with
+a reload before their push fired, and the first version of this fix made it
+worse by making the loss permanent instead of just slow.)

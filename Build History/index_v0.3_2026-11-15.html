@@ -1,0 +1,2784 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>New Home Schedule</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: sticky header + room-tab nav (mirrors the style guide's
+     numbered section bar); every room is a card grid (or list) on the
+     warm beige ground from the style guide. This page commits to that
+     one look on purpose — it ignores system dark mode so the beige
+     always shows, rather than switching to a dark palette per viewer. */
+  :root{
+    --ink:#2B2620;
+    --ink-70: rgba(43,38,32,.68);
+    --ink-45: rgba(43,38,32,.42);
+    --ink-15: rgba(43,38,32,.12);
+    --ketchup:#BD533B;
+    --avocado:#8C8740;
+    --bg:#EFEDEA;
+    --surface:#FEFEFE;
+    --panel:#E4E0D8;
+    --line:var(--ink-15);
+    --accent:var(--ketchup);
+    --accent-2:var(--avocado);
+
+    /* ---- Theming foundation: font roles, weights, scale multipliers ---- */
+    --f-display:'Lora', Georgia, 'Times New Roman', serif;
+    --f-head:'Lora', Georgia, 'Times New Roman', serif;
+    --f-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --f-ui:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --w-display:700;
+    --w-head:600;
+    --k-all:1;
+    --k-body:1;
+    --k-head:1;
+    --k-display:1;
+    --k-space:1;
+    --lh:1.5;
+    --wrap-w:1180px;
+    color-scheme: light;
+  }
+  html[data-mode="dark"]{
+    --ink:#EEE9E1;
+    --ink-70: rgba(238,233,225,.70);
+    --ink-45: rgba(238,233,225,.45);
+    --ink-15: rgba(238,233,225,.15);
+    --bg:#201C17;
+    --surface:#2A251E;
+    --panel:#161310;
+    color-scheme: dark;
+  }
+  html[data-accent="avocado"]{ --accent:var(--avocado); --accent-2:var(--ketchup); }
+  html[data-accent="ink"]{ --accent:var(--ink); --accent-2:var(--avocado); }
+  html[data-accent="slate"]{ --accent:#5B6B73; --accent-2:var(--avocado); }
+  *{ transition:background-color .15s ease, color .15s ease, border-color .15s ease; }
+  html[data-anim="reduced"] *, html[data-anim="reduced"] *::before, html[data-anim="reduced"] *::after{
+    transition-duration:0s !important; animation-duration:0s !important; animation-iteration-count:1 !important;
+  }
+  @media (prefers-reduced-motion:reduce){
+    *, *::before, *::after{ transition-duration:0s !important; animation-duration:0s !important; animation-iteration-count:1 !important; }
+  }
+  html[data-labels="sentence"] .page-tab, html[data-labels="sentence"] .tab,
+  html[data-labels="sentence"] .cat-label, html[data-labels="sentence"] .brand-eyebrow,
+  html[data-labels="sentence"] .view-btn, html[data-labels="sentence"] .collapse-all-btn,
+  html[data-labels="sentence"] details.how summary, html[data-labels="sentence"] .d-rows dt,
+  html[data-labels="sentence"] .opt-back, html[data-labels="sentence"] .opt-pill,
+  html[data-labels="sentence"] .lb-close, html[data-labels="sentence"] .label{
+    text-transform:none; letter-spacing:normal;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--panel);
+    color:var(--ink);
+    font-family:var(--f-body);
+    font-size:calc(16px * var(--k-all) * var(--k-body));
+    line-height:var(--lh);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px);
+    z-index:20; background:var(--bg);
+  }
+  a{color:inherit}
+  .wrap{
+    max-width:var(--wrap-w);
+    margin:0 auto;
+    padding-left:max(20px, env(safe-area-inset-left,0px));
+    padding-right:max(20px, env(safe-area-inset-right,0px));
+  }
+
+  /* ---- Header ---- */
+  header.top{
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+    padding-block: calc(18px * var(--k-all) * var(--k-space) + env(safe-area-inset-top,0px)) calc(20px * var(--k-all) * var(--k-space));
+  }
+  header.top .wrap{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap}
+  .brand-eyebrow{
+    font-family:var(--font-mono); font-size:calc(10px * var(--k-all)); letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--f-display); font-weight:var(--w-display); font-size:calc(clamp(28px,4vw,42px) * var(--k-all) * var(--k-display));
+    margin:0; letter-spacing:0; text-wrap:balance;
+  }
+  .sub{
+    font-family:var(--f-display); font-style:italic; font-size:calc(16px * var(--k-all) * var(--k-body));
+    color:var(--ink-70); margin:6px 0 0;
+  }
+  .totals{
+    font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); color:var(--ink-70);
+    text-align:right; line-height:1.7; white-space:nowrap;
+  }
+  .totals b{font-family:var(--f-display); font-size:calc(20px * var(--k-all) * var(--k-display)); color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; display:block}
+  .totals .est{font-size:calc(13px * var(--k-all)); font-weight:500; color:var(--ink-45)}
+
+  /* ---- Page switch (Items / Moodboard) ---- */
+  nav.pages{
+    background:var(--ink);
+  }
+  nav.pages .wrap{display:flex; gap:0; overflow-x:auto}
+  .page-tab{
+    font-family:var(--font-mono); font-weight:500; font-size:calc(11px * var(--k-all)); letter-spacing:.14em; text-transform:uppercase;
+    background:none; border:none; color:rgba(255,255,255,.55); cursor:pointer;
+    padding:11px 18px; border-bottom:2px solid transparent; white-space:nowrap;
+  }
+  .page-tab:hover{color:rgba(255,255,255,.85)}
+  .page-tab[aria-selected="true"]{color:#fff; border-bottom-color:var(--accent)}
+
+  /* ---- Tabs ---- */
+  nav.tabs{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:10;
+    background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  nav.tabs .wrap{display:flex; gap:2px; overflow-x:auto; padding-top:0; padding-bottom:0}
+  .tab{
+    font-family:var(--f-ui); font-weight:600; font-size:calc(13px * var(--k-all)); letter-spacing:.04em;
+    background:none; border:none; color:var(--ink-70); cursor:pointer;
+    padding:16px 16px 13px; border-bottom:3px solid transparent;
+    display:flex; align-items:baseline; gap:7px; white-space:nowrap;
+  }
+  .tab .code{font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); color:var(--ink-45)}
+  .tab .count{font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); color:var(--ink-45)}
+  .tab:hover{color:var(--ink)}
+  .tab[aria-selected="true"]{color:var(--ink); border-bottom-color:var(--accent)}
+  .tab[aria-selected="true"] .code{color:var(--accent)}
+
+  /* ---- View toggle ---- */
+  .toolbar{display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:20px}
+  .collapse-all-btn{
+    font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); letter-spacing:.08em; text-transform:uppercase;
+    background:var(--surface); border:1px solid var(--line); border-radius:3px; color:var(--ink-70);
+    cursor:pointer; padding:8px 16px;
+  }
+  .collapse-all-btn:hover{color:var(--ink); border-color:var(--ink-45)}
+  .sync-status{
+    font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); letter-spacing:.04em;
+    color:var(--ink-45); margin-right:auto; text-align:left;
+  }
+  .view-switch{
+    display:inline-flex; border:1px solid var(--line); border-radius:3px; overflow:hidden;
+  }
+  .view-btn{
+    font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); letter-spacing:.08em; text-transform:uppercase;
+    background:var(--surface); border:none; color:var(--ink-70); cursor:pointer;
+    padding:8px 16px;
+  }
+  .view-btn + .view-btn{border-left:1px solid var(--line)}
+  .view-btn:hover{color:var(--ink)}
+  .view-btn[aria-pressed="true"]{background:var(--ink); color:var(--surface)}
+
+  /* ---- Room panel ---- */
+  main{padding-block:0 60px}
+  .room{display:none}
+  .room.active{display:block}
+  .room-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    margin-bottom:calc(22px * var(--k-all) * var(--k-space)); flex-wrap:wrap;
+  }
+  .room-head h2{
+    font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(26px * var(--k-all) * var(--k-head)); margin:0;
+  }
+  .room-stat{font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); color:var(--ink-45)}
+
+  .cat-group{margin:calc(30px * var(--k-all) * var(--k-space)) 0 0}
+  .cat-group:first-of-type{margin-top:0}
+  .cat-group .grid{margin-top:14px}
+  .cat-label{
+    font-family:var(--f-ui); font-weight:600; font-size:calc(11px * var(--k-all)); letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent-2);
+    border-left:2px solid var(--accent-2); padding-left:9px;
+    margin:0;
+  }
+  summary.cat-label{cursor:pointer; list-style:none; display:flex; align-items:center; gap:8px}
+  #mood-sections .cat-group .mood-grid{margin-top:14px}
+  summary.cat-label::-webkit-details-marker{display:none}
+  summary.cat-label:hover{color:var(--ink)}
+  /* + / − toggle to the left of a collapsible category title */
+  summary.cat-label .toggle{
+    flex:none; width:14px; text-align:center;
+    font-family:var(--font-mono); font-size:14px; font-weight:500; line-height:1; letter-spacing:0;
+  }
+  summary.cat-label .toggle::before{content:"+"}
+  details[open] > summary.cat-label .toggle::before{content:"\2212"}
+
+  #rooms{padding-top:calc(28px * var(--k-all) * var(--k-space))}
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:16px;
+  }
+
+  /* ---- List view ---- */
+  #rooms.list-view .grid{grid-template-columns:1fr; gap:10px}
+  #rooms.list-view .card{flex-direction:row}
+  #rooms.list-view .card .shot{
+    aspect-ratio:auto; width:110px; flex:0 0 110px;
+  }
+  #rooms.list-view .card .body{
+    padding:10px 16px; gap:4px;
+  }
+  #rooms.list-view .card .spec{border-top:none; margin-top:0; padding-top:0}
+  #rooms.list-view .card.placeholder .shot{
+    flex-direction:row; align-items:center; justify-content:space-between;
+    width:auto; flex:1; min-height:0; padding:14px 18px; gap:16px;
+  }
+  #rooms.list-view .card.placeholder .pname{text-align:left; flex:1}
+  #rooms.list-view .card.placeholder .pnote,
+  #rooms.list-view .card.placeholder .pest{white-space:nowrap}
+  #rooms.list-view .card.placeholder .label{margin-top:0; padding-top:0}
+  #rooms.list-view .card{padding-right:44px}
+  #rooms.list-view .buy{top:50%; transform:translateY(-50%)}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:3px;
+    overflow:hidden; display:flex; flex-direction:column; min-width:0;
+    position:relative;
+  }
+
+  /* ---- Remove item ---- */
+  .remove-item{
+    position:absolute; top:6px; right:40px; z-index:2;
+    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+    border:none; background:rgba(255,255,255,.85); border-radius:50%; color:var(--ink-45);
+    cursor:pointer; font-size:12px; line-height:1; -webkit-tap-highlight-color:transparent;
+  }
+  .remove-item:hover{color:#C0392B; background:#fff}
+  #rooms.list-view .remove-item{top:50%; right:44px; transform:translateY(-50%)}
+
+  /* ---- Add-item dialog ---- */
+  #add-item{
+    border:none; padding:0; background:transparent; color:var(--ink);
+    width:min(480px, calc(100vw - 32px)); max-width:none; max-height:calc(100vh - 48px);
+  }
+  #add-item::backdrop{background:rgba(43,38,32,.55)}
+  #add-item .d-wrap{
+    position:relative; background:var(--surface); border-radius:4px; overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.3);
+  }
+  .add-form{
+    padding:26px 26px 24px; display:flex; flex-direction:column; gap:12px;
+    max-height:calc(100vh - 100px); overflow-y:auto;
+  }
+  .add-form h3{font-family:var(--f-head); font-size:19px; margin:0 0 4px; font-weight:var(--w-head)}
+  .add-form .field{margin-bottom:0}
+  .add-form .field input, .add-form .field select{
+    font:inherit; font-family:var(--f-ui); padding:8px 9px; border:1px solid var(--line);
+    border-radius:3px; background:var(--bg); color:var(--ink); width:100%;
+  }
+  .add-submit{margin-top:6px; align-self:flex-start}
+
+  /* ---- Bought checkbox ---- */
+  .buy{
+    position:absolute; top:6px; right:6px; z-index:2;
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  .buy input, .lead-pick input{
+    -webkit-appearance:none; appearance:none; margin:0; cursor:pointer;
+    width:20px; height:20px; border:1.5px solid var(--ink-45); border-radius:3px;
+    background:var(--surface); display:grid; place-content:center;
+  }
+  .buy input::before, .lead-pick input::before{
+    content:""; width:10px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff;
+    transform:translateY(-1px) rotate(-45deg); opacity:0;
+  }
+  .buy input:hover, .lead-pick input:hover{border-color:var(--ink)}
+  .buy input:checked, .lead-pick input:checked{background:var(--avocado); border-color:var(--avocado)}
+  .buy input:checked::before, .lead-pick input:checked::before{opacity:1}
+  .buy input:focus-visible, .lead-pick input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ---- Multi-option slots ---- */
+  .opt-pill{
+    position:absolute; bottom:10px; left:10px; font-family:var(--font-mono); font-size:calc(10px * var(--k-all));
+    letter-spacing:.06em; text-transform:uppercase; background:var(--ink); color:#fff;
+    padding:3px 7px; border-radius:2px;
+  }
+  #options{display:none}
+  #view-items.show-options #options{display:block}
+  #view-items.show-options #rooms,
+  #view-items.show-options .toolbar{display:none}
+  .opt-back{
+    display:inline-block; margin:24px 0 14px; font-family:var(--font-mono); font-size:calc(11px * var(--k-all));
+    letter-spacing:.08em; text-transform:uppercase; color:var(--accent); text-decoration:none;
+  }
+  .opt-back:hover{text-decoration:underline}
+  .card.lead{border-color:var(--avocado); box-shadow:0 0 0 1px var(--avocado)}
+  .lead-pick{
+    position:relative; z-index:2; display:flex; align-items:center; gap:9px; cursor:pointer;
+    margin-top:6px; padding-top:10px; border-top:1px solid var(--line);
+    font-family:var(--f-ui); font-weight:600; font-size:calc(12px * var(--k-all)); color:var(--ink-70);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .card.lead .lead-pick{color:var(--avocado); cursor:default}
+  .lead-pick input:disabled{cursor:default}
+  .card.bought > :not(.buy){opacity:.45}
+  .card.bought img{filter:grayscale(1)}
+  .card.bought .name, .card.bought .pname{text-decoration:line-through}
+  .card .shot{
+    aspect-ratio:4/3; background:var(--panel); display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .card .shot img{width:100%; height:100%; object-fit:contain; padding:10px; display:block}
+  .tag{
+    position:absolute; top:10px; left:10px; font-family:var(--font-mono); font-size:calc(10px * var(--k-all));
+    letter-spacing:.06em; background:var(--accent); color:#fff; padding:3px 7px; border-radius:2px;
+  }
+  .card .body{padding:13px 14px 15px; display:flex; flex-direction:column; gap:7px; flex:1}
+  .card .name{
+    font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(15.5px * var(--k-all) * var(--k-head)); line-height:1.3;
+    text-decoration:none; color:var(--ink);
+  }
+  .card .name::after{content:""; position:absolute; inset:0; z-index:1}
+  .card:hover .name{color:var(--accent)}
+  .card .material{font-family:var(--f-body); font-size:calc(11.5px * var(--k-all) * var(--k-body)); color:var(--ink-70); line-height:1.4}
+  .card .spec{
+    font-family:var(--font-mono); font-size:calc(11px * var(--k-all)); color:var(--ink-45);
+    letter-spacing:.01em; border-top:1px solid var(--line); margin-top:auto;
+    padding-top:9px;
+  }
+  .card .foot{display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:2px}
+  .price{font-family:var(--f-body); font-weight:700; font-size:calc(15.5px * var(--k-all) * var(--k-body)); font-variant-numeric:tabular-nums}
+  .view{
+    font-family:var(--f-ui); font-weight:600; font-size:calc(11px * var(--k-all)); letter-spacing:.03em;
+    color:var(--accent); text-decoration:none; white-space:nowrap;
+  }
+  .view:hover{text-decoration:underline}
+
+  .card.placeholder{
+    border:1.5px dashed var(--ink-45); background:transparent;
+  }
+  .card.placeholder .shot{
+    background:transparent; aspect-ratio:auto; flex:1; min-height:92px;
+    flex-direction:column; gap:3px; color:var(--ink-45); padding:14px 12px;
+  }
+  .card.placeholder .pname{
+    font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(14.5px * var(--k-all) * var(--k-head)); color:var(--ink);
+    text-align:center; line-height:1.3;
+  }
+  .card.placeholder .pnote{
+    font-family:var(--f-body); font-size:calc(11px * var(--k-all) * var(--k-body)); color:var(--accent-2); text-align:center;
+  }
+  .card.placeholder .pest{
+    font-family:var(--font-mono); font-size:calc(12.5px * var(--k-all)); color:var(--ink-70);
+    font-variant-numeric:tabular-nums; margin-top:2px;
+  }
+  .card.placeholder .label{
+    font-family:var(--font-mono); font-size:calc(10px * var(--k-all)); letter-spacing:.1em;
+    color:var(--ink-45); text-transform:uppercase; margin-top:auto; padding-top:8px;
+  }
+
+  /* ---- Page switch (Items / Moodboard) ---- */
+  #view-items{display:none}
+  #view-items.active{display:block}
+  #view-moodboard{display:none}
+  #view-moodboard.active{display:block}
+  .mood-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    margin:calc(28px * var(--k-all) * var(--k-space)) 0 calc(20px * var(--k-all) * var(--k-space)); flex-wrap:wrap;
+  }
+  .mood-head h2{font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(26px * var(--k-all) * var(--k-head)); margin:0}
+  .mood-stat{font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); color:var(--ink-45)}
+  .mood-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; align-items:start;
+  }
+  .mood-grid figure{
+    margin:0; background:var(--surface); border:1px solid var(--line);
+    border-radius:3px; overflow:hidden;
+  }
+  .mood-grid{grid-auto-flow:dense}
+  .mood-grid img{display:block; width:100%; height:auto; cursor:zoom-in}
+  .mood-grid figure{cursor:grab}
+  .mood-grid figure.dragging{opacity:.35; cursor:grabbing}
+
+  /* ---- Lightbox ---- */
+  /* ---- Product detail card ---- */
+  #detail{
+    border:none; padding:0; background:transparent; color:var(--ink);
+    width:min(880px, calc(100vw - 32px)); max-width:none; max-height:calc(100vh - 48px);
+  }
+  #detail::backdrop{background:rgba(43,38,32,.55)}
+  #detail .d-wrap{
+    position:relative; background:var(--surface); border-radius:4px; overflow:hidden;
+    box-shadow:0 18px 50px rgba(0,0,0,.3);
+  }
+  #detail-body{display:grid; grid-template-columns:1.1fr 1fr}
+  #detail .d-shot{background:var(--panel); display:flex; align-items:center; justify-content:center; min-height:300px}
+  #detail .d-shot img{display:block; width:100%; height:100%; max-height:520px; object-fit:contain; padding:16px}
+  #detail .d-info{padding:26px 26px 24px; display:flex; flex-direction:column; gap:12px; align-items:flex-start}
+  #detail .d-tag{position:static}
+  #detail .d-name{font-family:var(--f-head); font-weight:var(--w-head); font-size:calc(24px * var(--k-all) * var(--k-head)); line-height:1.25; margin:0}
+  #detail .d-rows{margin:0; display:grid; grid-template-columns:auto 1fr; gap:7px 14px; font-family:var(--f-body); font-size:calc(13px * var(--k-all) * var(--k-body)); line-height:1.45}
+  #detail .d-rows dt{font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-45); padding-top:2px}
+  #detail .d-rows dd{margin:0; color:var(--ink-70)}
+  #detail .d-price{font-family:var(--f-display); font-weight:700; font-size:calc(22px * var(--k-all) * var(--k-display)); font-variant-numeric:tabular-nums; margin-top:4px}
+  #detail .d-link{
+    margin-top:auto; display:inline-block; background:var(--accent); color:#fff; text-decoration:none;
+    font-family:var(--f-ui); font-weight:600; font-size:calc(13px * var(--k-all)); letter-spacing:.02em; padding:11px 18px; border-radius:3px;
+  }
+  #detail .d-link:hover{background:#a8462f}
+  #detail .d-close{
+    position:absolute; top:10px; right:10px; z-index:1; width:34px; height:34px; border-radius:50%;
+    border:none; background:rgba(255,255,255,.9); color:var(--ink); font-size:22px; line-height:1; cursor:pointer;
+  }
+  #detail .d-close:hover{background:#fff; color:var(--accent)}
+  .price.tbc{font-weight:500; color:var(--ink-45); font-size:13px}
+  @media (max-width:600px){
+    #detail-body{grid-template-columns:1fr}
+    #detail .d-shot{min-height:0}
+    #detail .d-shot img{max-height:300px}
+    #detail .d-info{padding:18px 18px 20px}
+    #detail .d-name{font-size:21px}
+    #detail .d-link{margin-top:6px; align-self:stretch; text-align:center}
+  }
+
+  #lightbox{
+    position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center;
+    background:rgba(20,16,12,.92); padding:48px 24px; cursor:zoom-out;
+  }
+  #lightbox.active{display:flex}
+  #lightbox img{max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 40px rgba(0,0,0,.5); cursor:default}
+  #lightbox .lb-close{
+    position:absolute; top:16px; right:20px; font-family:var(--font-mono); font-size:calc(12px * var(--k-all)); letter-spacing:.08em;
+    text-transform:uppercase; color:rgba(255,255,255,.75); background:none; border:1px solid rgba(255,255,255,.3);
+    padding:7px 14px; border-radius:3px; cursor:pointer;
+  }
+  #lightbox .lb-close:hover{color:#fff; border-color:rgba(255,255,255,.6)}
+  #lightbox .lb-cap{
+    position:absolute; bottom:18px; left:24px; right:24px; text-align:center;
+    font-family:var(--f-body); font-size:calc(12.5px * var(--k-all) * var(--k-body)); color:rgba(255,255,255,.8);
+  }
+  @media (max-width:600px){ #lightbox{padding:24px 14px} }
+  .mood-grid figure.tall{grid-row:span 2; align-self:stretch; display:flex; flex-direction:column}
+  .mood-grid figure.tall img{flex:1; min-height:0; object-fit:cover}
+  .mood-grid figcaption{
+    padding:9px 11px 11px; font-family:var(--f-body); font-size:calc(11.5px * var(--k-all) * var(--k-body)); color:var(--ink-70); line-height:1.4;
+  }
+  .mood-grid figcaption b{display:block; font-family:var(--f-head); font-size:calc(13.5px * var(--k-all) * var(--k-head)); font-weight:var(--w-head); color:var(--ink); margin-bottom:2px}
+  .mood-grid figcaption a{color:var(--accent); font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); text-decoration:none}
+  .mood-grid figcaption a:hover{text-decoration:underline}
+  .mood-empty{
+    border:1.5px dashed var(--ink-45); border-radius:3px; padding:50px 24px; text-align:center;
+    color:var(--ink-45); margin-top:4px;
+  }
+  .mood-empty p{font-family:var(--f-body); font-size:calc(13.5px * var(--k-all) * var(--k-body)); line-height:1.6; max-width:48ch; margin:0 auto}
+  .mood-empty p + p{margin-top:8px; font-size:calc(12px * var(--k-all) * var(--k-body))}
+
+
+  details.how{
+    margin-top:44px; border-top:1px solid var(--line); padding-top:18px;
+  }
+  details.how summary{
+    cursor:pointer; font-family:var(--f-ui); font-weight:600; font-size:calc(12.5px * var(--k-all));
+    letter-spacing:.04em; color:var(--ink-70); list-style:none;
+  }
+  details.how summary::-webkit-details-marker{display:none}
+  details.how summary::before{content:"— "}
+  details.how p{font-family:var(--f-body); font-size:calc(13px * var(--k-all) * var(--k-body)); color:var(--ink-70); line-height:1.6; max-width:62ch; margin:10px 0 0}
+
+  /* ---- Phones: tighter header, two-up cards, compact list rows ----
+     Written as a container query against #page-shell (container-type:
+     inline-size) rather than the browser viewport, so the header's
+     "view as mobile" toggle can narrow that one element and trigger
+     the exact same reflow a real phone would get, independent of how
+     wide the browser window actually is. A genuinely narrow window
+     also has a narrow #page-shell, so this covers real small screens
+     too — one set of rules, two ways to trigger it. ---- */
+  @container (max-width:600px){
+    .wrap{padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px))}
+    header.top{padding-block:calc(14px + env(safe-area-inset-top,0px)) 14px}
+    header.top .wrap{flex-direction:column; align-items:stretch; gap:12px}
+    h1{font-size:30px}
+    .sub{font-size:14.5px; margin-top:2px}
+    .totals{
+      text-align:left; display:flex; flex-wrap:wrap; align-items:baseline; column-gap:14px;
+      border-top:1px solid var(--line); padding-top:10px; line-height:1.5;
+    }
+    .totals br{display:none}
+    .totals b{order:-1; flex-basis:100%; font-size:22px}
+
+    .page-tab{flex:1; padding:12px 10px}
+    .tab{padding:13px 11px 10px; font-size:13px}
+
+    .toolbar{padding-top:14px}
+    #rooms{padding-top:16px}
+    .room-head{margin-bottom:14px}
+    .room-head h2{font-size:22px}
+    .cat-group{margin:22px 0 0}
+    .cat-group .grid{margin-top:10px}
+
+    .grid{grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; align-items:start}
+    .card .body{padding:10px 10px 12px; gap:5px}
+    .card .name{font-size:14px}
+    .card .material{font-size:11px}
+    .card .spec{font-size:10px; padding-top:7px}
+    .card .foot{flex-wrap:wrap; gap:2px 8px}
+    .price{font-size:14px}
+    .card.placeholder .shot{min-height:96px; padding:12px 30px 10px 10px; align-items:flex-start}
+    .card.placeholder .pname, .card.placeholder .pnote{text-align:left; font-size:13.5px}
+    .card.placeholder .pnote{font-size:11px}
+    .card.placeholder .pest{font-size:11.5px}
+    .buy{top:2px; right:2px}
+    .remove-item{top:2px; right:30px; width:20px; height:20px}
+
+    #rooms.list-view .grid{gap:8px}
+    #rooms.list-view .card .shot{width:84px; flex-basis:84px}
+    #rooms.list-view .card .body{padding:9px 12px}
+    #rooms.list-view .card.placeholder .shot{padding:11px 14px; gap:10px; align-items:center}
+    #rooms.list-view .card.placeholder .pnote{display:none}
+    #rooms.list-view .card.placeholder .label{display:none}
+
+    .mood-head{margin:20px 0 14px}
+    .mood-head h2{font-size:22px}
+    .mood-grid{grid-template-columns:1fr; gap:12px}
+    .mood-grid figure.tall{grid-row:auto}
+  }
+
+  /* ---- Draft tooling: page shell, header icons, slide-in panels ----
+     Everything below is scaffolding for reviewing drafts of this
+     schedule — it never appears to anyone but the person steering
+     the build, carries no brand styling, and is cut entirely from
+     a --public build. */
+  #page-shell{
+    container-type:inline-size;
+    margin-inline:auto;
+    transition:max-width .25s ease;
+  }
+  html[data-devicepreview="1"] #page-shell{
+    max-width:var(--device-w, 390px);
+    border-inline:1px solid var(--ink-45);
+    box-shadow:0 0 0 6px var(--ink), 0 0 30px rgba(0,0,0,.25);
+    min-height:var(--device-h, auto);
+  }
+  html[data-devicepreview="1"] body{ background:var(--ink-15); padding-block:18px; }
+
+  .site-foot{ padding:26px 0 40px; }
+  .site-foot .wrap{
+    font-family:var(--font-mono); font-size:calc(10.5px * var(--k-all)); letter-spacing:.06em;
+    text-transform:uppercase; color:var(--ink-45); border-top:1px solid var(--line); padding-top:14px;
+  }
+
+  .draft-tools{
+    position:fixed; top:12px; right:12px; z-index:200;
+    display:flex; gap:6px; background:#1C1812; border-radius:20px; padding:5px;
+    box-shadow:0 4px 16px rgba(0,0,0,.25);
+  }
+  .draft-icon{
+    width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+    background:transparent; color:rgba(255,255,255,.7);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .draft-icon:hover{color:#fff; background:rgba(255,255,255,.08)}
+  .draft-icon[aria-pressed="true"]{color:#fff; background:var(--ketchup)}
+
+  .panel-overlay{
+    position:fixed; top:0; right:0; bottom:0; width:min(380px, 100vw);
+    background:var(--surface); color:var(--ink); z-index:210;
+    box-shadow:-8px 0 30px rgba(0,0,0,.25);
+    transform:translateX(100%); transition:transform .25s ease;
+    display:flex; flex-direction:column;
+  }
+  .panel-overlay.open{transform:translateX(0)}
+  .panel-head{
+    display:flex; align-items:center; gap:10px; padding:16px 18px;
+    border-bottom:1px solid var(--line); flex:none;
+  }
+  .panel-head h3{font-family:var(--f-head); font-size:17px; margin:0; font-weight:600}
+  .draft-label{
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-45); margin-right:auto;
+  }
+  .panel-close{
+    border:none; background:none; color:var(--ink-45); font-size:22px; line-height:1; cursor:pointer; padding:0 2px;
+  }
+  .panel-close:hover{color:var(--ink)}
+  .panel-body{overflow-y:auto; padding:6px 18px 30px; flex:1}
+  .panel-group{margin-top:22px; padding-top:18px; border-top:1px solid var(--line)}
+  .panel-group:first-child{margin-top:16px; padding-top:0; border-top:none}
+  .panel-group h4{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent-2); margin:0 0 12px;
+  }
+  .field{
+    display:flex; flex-direction:column; gap:5px; font-family:var(--f-ui); font-size:12.5px;
+    font-weight:600; color:var(--ink-70); margin-bottom:12px;
+  }
+  .field select, .field input[type="range"]{
+    font:inherit; font-family:var(--f-ui); padding:7px 8px; border:1px solid var(--line); border-radius:3px;
+    background:var(--bg); color:var(--ink); width:100%;
+  }
+  .field.slider{flex-direction:column}
+  .field input[type="range"]{padding:0; accent-color:var(--accent)}
+  .check{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-70);
+    margin-bottom:8px; cursor:pointer;
+  }
+  .panel-btn{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    background:var(--ink); color:var(--surface); border:none; border-radius:3px;
+    padding:9px 14px; cursor:pointer; margin-bottom:8px;
+  }
+  .panel-btn:hover{background:var(--accent)}
+  .panel-textarea{
+    width:100%; font-family:var(--f-body); font-size:12.5px; color:var(--ink);
+    border:1px solid var(--line); border-radius:3px; padding:9px; background:var(--bg);
+    resize:vertical;
+  }
+  .panel-row{display:flex; align-items:center; gap:10px; margin-top:8px}
+  .notes-status{font-family:var(--font-mono); font-size:10.5px; color:var(--avocado)}
+  .panel-hint{font-size:11.5px; color:var(--ink-45); line-height:1.5; margin-top:10px}
+  .panel-hint code{font-family:var(--font-mono); font-size:10.5px}
+  .build-note{font-size:12.5px; color:var(--ink-70); line-height:1.6; margin:0}
+  .build-note code{font-family:var(--font-mono); font-size:11px}
+  .build-list{list-style:none; margin:0; padding:0; font-size:12.5px}
+  .build-list li{padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:10px}
+  .build-list li:last-child{border-bottom:none}
+  .build-list a{color:var(--accent); text-decoration:none}
+  .build-list a:hover{text-decoration:underline}
+  .build-empty{color:var(--ink-45)}
+  .build-list .panel-btn{margin:0; padding:5px 10px; font-size:9.5px; flex:none}
+  .build-list li span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+  .specimen{display:flex; flex-direction:column; gap:10px}
+  .specimen p{margin:0}
+  .spec-display{font-family:var(--f-display); font-weight:var(--w-display); font-size:28px; line-height:1.15}
+  .spec-head{font-family:var(--f-head); font-weight:var(--w-head); font-size:18px}
+  .spec-body{font-family:var(--f-body); font-size:13px; line-height:1.5; color:var(--ink-70)}
+  .spec-ui{font-family:var(--f-ui); font-weight:600; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+
+  /* Draft-only aids */
+  html[data-highlight-placeholders="1"] .card.placeholder{
+    border-color:#C0392B; background:rgba(192,57,43,.06);
+  }
+  html[data-highlight-placeholders="1"] .card.placeholder .label{color:#C0392B}
+  html[data-hires-reminder="1"] .card[data-owned="1"]::before{
+    content:""; position:absolute; top:6px; left:6px; width:9px; height:9px; border-radius:50%;
+    background:#C0392B; border:1.5px solid var(--surface); z-index:3;
+  }
+
+  @media (max-width:460px){
+    .panel-overlay{width:100vw}
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+<div class="draft-tools" aria-label="Draft tools — not part of the public site">
+  <button type="button" class="draft-icon" id="mobile-toggle" aria-pressed="false" aria-label="View as mobile" title="View as mobile">
+    <svg id="mobile-toggle-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line></svg>
+  </button>
+  <button type="button" class="draft-icon" id="settings-toggle" aria-pressed="false" aria-label="Settings" title="Settings">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+  </button>
+  <button type="button" class="draft-icon" id="claude-toggle" aria-pressed="false" aria-label="Claude notes" title="Claude">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 6.3L21 12l-6.8 2.7L12 21l-2.2-6.3L3 12l6.8-2.7L12 3z"></path></svg>
+  </button>
+</div>
+
+<div id="page-shell">
+
+<header class="top">
+  <div class="wrap">
+    <div>
+      <p class="brand-eyebrow">Fit-Out Schedule</p>
+      <h1>New Home</h1>
+      <p class="sub">Furniture &amp; equipment, room by room</p>
+    </div>
+    <div class="totals">
+      <span id="item-count">1 of 91 sourced</span><br>
+      <span id="bought-count">0 of 91 bought</span>
+      <b id="running-total">$1,799 <span class="est" id="estimate-line">+ ~$12,816 est.</span></b>
+    </div>
+  </div>
+</header>
+
+<nav class="pages" aria-label="Page">
+  <div class="wrap">
+    <button type="button" class="page-tab" id="page-items" aria-selected="true">Items</button>
+    <button type="button" class="page-tab" id="page-moodboard" aria-selected="false">Moodboard</button>
+  </div>
+</nav>
+
+<div id="view-items" class="active">
+  <nav class="tabs" role="tablist" aria-label="Rooms">
+    <div class="wrap" id="tab-row"></div>
+  </nav>
+
+  <main class="wrap">
+    <div class="toolbar">
+      <span class="sync-status" id="sync-status" aria-live="polite"></span>
+      <button type="button" class="collapse-all-btn" id="add-item-btn">+ Add item</button>
+      <button type="button" class="collapse-all-btn" id="collapse-all">Collapse all</button>
+      <div class="view-switch" role="group" aria-label="View">
+        <button type="button" class="view-btn" id="view-grid" aria-pressed="true">Grid</button>
+        <button type="button" class="view-btn" id="view-list" aria-pressed="false">List</button>
+      </div>
+    </div>
+
+    <div id="rooms"></div>
+    <div id="options"></div>
+
+    <details class="how">
+      <summary>How this list works</summary>
+      <p>
+        Every room below comes from the household checklist — ticked items that don't have a product
+        yet sit as named, dashed placeholders, each with a rough budget estimate. Send through a link
+        for any of them (or more rows from the spreadsheet) and it gets swapped in as a full card with
+        image, dimensions and a confirmed price. Estimates are rough mid-range AUD figures for planning,
+        not quotes.
+      </p>
+    </details>
+  </main>
+</div>
+
+<dialog id="detail" aria-label="Product details">
+  <div class="d-wrap">
+    <button type="button" class="d-close" id="detail-close" aria-label="Close">×</button>
+    <div id="detail-body"></div>
+  </div>
+</dialog>
+
+<dialog id="add-item" aria-label="Add an item">
+  <div class="d-wrap">
+    <button type="button" class="d-close" id="add-item-close" aria-label="Close">×</button>
+    <form id="add-item-form" class="add-form">
+      <h3>Add an item</h3>
+      <label class="field">Room
+        <select id="add-room" required></select>
+      </label>
+      <label class="field">Category
+        <select id="add-cat" required></select>
+      </label>
+      <label class="field" id="add-cat-new-wrap">New category name
+        <input type="text" id="add-cat-new" placeholder="e.g. Lighting">
+      </label>
+      <label class="field">Name
+        <input type="text" id="add-name" required placeholder="e.g. Floor lamp">
+      </label>
+      <label class="field">Brand
+        <input type="text" id="add-brand" placeholder="optional">
+      </label>
+      <label class="field">Material / colour
+        <input type="text" id="add-material" placeholder="optional">
+      </label>
+      <label class="field">Dimensions
+        <input type="text" id="add-dims" placeholder="optional">
+      </label>
+      <label class="field">Price (AUD)
+        <input type="number" id="add-price" min="0" step="0.01" placeholder="optional">
+      </label>
+      <label class="field">Product URL
+        <input type="url" id="add-url" placeholder="optional">
+      </label>
+      <label class="field">Image URL
+        <input type="url" id="add-img" placeholder="optional — shows a plain placeholder otherwise">
+      </label>
+      <label class="field">Note
+        <input type="text" id="add-note" placeholder="optional">
+      </label>
+      <button type="submit" class="panel-btn add-submit">Add to schedule</button>
+    </form>
+  </div>
+</dialog>
+
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Enlarged photo">
+  <button type="button" class="lb-close">Close ✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <div class="lb-cap" id="lightbox-cap"></div>
+</div>
+
+<div id="view-moodboard">
+  <main class="wrap">
+    <div class="mood-head">
+      <h2>Moodboard</h2>
+      <span class="mood-stat" id="mood-stat">0 pins</span>
+    </div>
+    <div id="mood-sections"></div>
+    <div id="mood-empty" class="mood-empty">
+      <p>Nothing pinned yet.</p>
+      <p>Send through photos, screenshots or links of looks, palettes and rooms you like and they'll get pinned here.</p>
+    </div>
+  </main>
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span id="build-badge-foot">Draft build v0.1 · 15 Nov 2026</span>
+  </div>
+</footer>
+
+</div><!-- /#page-shell -->
+
+<div class="panel-overlay" id="panel-settings" aria-hidden="true">
+  <div class="panel-head">
+    <h3>Settings</h3>
+    <span class="draft-label">Not part of the public site</span>
+    <button type="button" class="panel-close" id="settings-close" aria-label="Close settings">×</button>
+  </div>
+  <div class="panel-body">
+
+    <section class="panel-group">
+      <h4>Typography</h4>
+      <label class="field">Display font
+        <select id="set-f-display"></select>
+      </label>
+      <label class="field">Heading font
+        <select id="set-f-head"></select>
+      </label>
+      <label class="field">Body font
+        <select id="set-f-body"></select>
+      </label>
+      <label class="field">Labels / nav / buttons font
+        <select id="set-f-ui"></select>
+      </label>
+      <label class="field">Display weight
+        <select id="set-w-display">
+          <option value="300">Light</option>
+          <option value="400">Regular</option>
+          <option value="500">Medium</option>
+          <option value="700" selected>Bold (default)</option>
+        </select>
+      </label>
+      <label class="field">Heading weight
+        <select id="set-w-head">
+          <option value="300">Light</option>
+          <option value="400">Regular</option>
+          <option value="500">Medium</option>
+          <option value="600" selected>Semibold (default)</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Size &amp; spacing</h4>
+      <label class="field slider">Overall text size
+        <input type="range" id="set-k-all" min="0.8" max="1.3" step="0.01" value="1">
+      </label>
+      <label class="field slider">Body size
+        <input type="range" id="set-k-body" min="0.8" max="1.4" step="0.01" value="1">
+      </label>
+      <label class="field slider">Heading size
+        <input type="range" id="set-k-head" min="0.8" max="1.4" step="0.01" value="1">
+      </label>
+      <label class="field slider">Display size
+        <input type="range" id="set-k-display" min="0.8" max="1.6" step="0.01" value="1">
+      </label>
+      <label class="field slider">Line spacing
+        <input type="range" id="set-lh" min="1.2" max="2" step="0.01" value="1.5">
+      </label>
+      <label class="field slider">Section spacing
+        <input type="range" id="set-k-space" min="0.6" max="1.6" step="0.01" value="1">
+      </label>
+      <label class="field">Content width
+        <select id="set-wrap-w">
+          <option value="880">Narrow</option>
+          <option value="1180" selected>Standard</option>
+          <option value="1440">Wide</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Look &amp; feel</h4>
+      <label class="field">Appearance
+        <select id="set-mode">
+          <option value="light" selected>Light</option>
+          <option value="dark">Dark</option>
+          <option value="system">Match this device</option>
+        </select>
+      </label>
+      <label class="field">Accent colour
+        <select id="set-accent">
+          <option value="ketchup" selected>Ketchup (brand default)</option>
+          <option value="avocado">Avocado</option>
+          <option value="ink">Ink</option>
+          <option value="slate">Slate</option>
+        </select>
+      </label>
+      <label class="field">Label style
+        <select id="set-labels">
+          <option value="upper" selected>UPPERCASE spaced</option>
+          <option value="sentence">Sentence case</option>
+        </select>
+      </label>
+      <label class="field">Animation
+        <select id="set-anim">
+          <option value="full" selected>Full</option>
+          <option value="reduced">Reduced</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Presets</h4>
+      <label class="field">Preset
+        <select id="set-preset">
+          <option value="" selected>— choose a preset —</option>
+          <option value="brand">Brand default</option>
+          <option value="soft">Soft &amp; friendly</option>
+          <option value="serif">Classic serif headings</option>
+          <option value="mono">Mono &amp; minimal</option>
+          <option value="warm">Warm &amp; bold</option>
+          <option value="accessible">Large &amp; clear (accessibility)</option>
+        </select>
+      </label>
+      <button type="button" class="panel-btn" id="set-reset">Reset to defaults</button>
+    </section>
+
+    <section class="panel-group">
+      <h4>Copy settings</h4>
+      <button type="button" class="panel-btn" id="set-copy">Copy settings to clipboard</button>
+      <textarea id="set-copy-box" class="panel-textarea" rows="5" readonly placeholder="Click “Copy settings” to fill this in, then paste it back to Claude in chat to apply it as the new default."></textarea>
+    </section>
+
+    <section class="panel-group">
+      <h4>Type specimen</h4>
+      <div class="specimen">
+        <p class="spec-display">Aa Display 42</p>
+        <p class="spec-head">Aa Heading 26</p>
+        <p class="spec-body">The quick brown fox jumps over the lazy dog — body text.</p>
+        <p class="spec-ui">LABEL / NAV / BUTTON</p>
+      </div>
+    </section>
+
+    <section class="panel-group">
+      <h4>Preview</h4>
+      <label class="field">Mobile preview device
+        <select id="set-device"></select>
+      </label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Draft-only aids</h4>
+      <label class="check"><input type="checkbox" id="tog-placeholders"> Highlight placeholders in red</label>
+      <label class="check"><input type="checkbox" id="tog-hires"> Show hi-res photo reminder dots</label>
+    </section>
+
+    <section class="panel-group">
+      <h4>Removed items</h4>
+      <ul class="build-list" id="removed-list"><li class="build-empty">Nothing removed.</li></ul>
+    </section>
+
+    <section class="panel-group">
+      <h4>Build</h4>
+      <p class="build-note" id="build-note">Draft build v0.1 · 15 Nov 2026. Earlier builds are archived in the <code>Build History</code> folder of this repo.</p>
+    </section>
+
+  </div>
+</div>
+
+<div class="panel-overlay" id="panel-claude" aria-hidden="true">
+  <div class="panel-head">
+    <h3>Claude</h3>
+    <span class="draft-label">Not part of the public site</span>
+    <button type="button" class="panel-close" id="claude-close" aria-label="Close Claude panel">×</button>
+  </div>
+  <div class="panel-body">
+    <section class="panel-group">
+      <h4>Notes for the next build</h4>
+      <textarea id="claude-notes" class="panel-textarea" rows="8" placeholder="Jot review notes and change requests here while you're looking at this build, then Save to GitHub when you're ready for the next version."></textarea>
+      <div class="panel-row">
+        <button type="button" class="panel-btn" id="claude-notes-save">Save to GitHub</button>
+        <span class="notes-status" id="claude-notes-status"></span>
+      </div>
+      <p class="panel-hint">
+        Saves straight to <code>NOTES_INBOX.md</code> in this repo (needs the token below). Claude
+        reads that file at the start of the next session and acts on it — no copy-pasting needed.
+        A draft is also kept in this browser between saves.
+      </p>
+    </section>
+    <section class="panel-group">
+      <h4>GitHub access</h4>
+      <label class="field">Personal access token
+        <input type="password" id="gh-token-input" placeholder="github_pat_… or ghp_…" autocomplete="off">
+      </label>
+      <span class="notes-status" id="gh-token-status"></span>
+      <p class="panel-hint">
+        Stored only in this browser (<code>localStorage</code>) and sent straight to
+        <code>api.github.com</code> when you save notes — nowhere else. Use a
+        <strong>fine-grained token</strong> scoped to just the
+        <code>Schippeaux/new-home-schedule</code> repo, with "Contents: Read and write"
+        permission, so a leaked token can't reach anything beyond this repo. Create one at
+        GitHub → Settings → Developer settings → Fine-grained tokens.
+      </p>
+    </section>
+    <section class="panel-group">
+      <h4>Current build</h4>
+      <p class="build-note" id="build-note-claude">Draft build v0.1 · 15 Nov 2026</p>
+    </section>
+    <section class="panel-group">
+      <h4>Previous builds</h4>
+      <ul class="build-list" id="build-list"><li class="build-empty">This is the first build.</li></ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Room order: the four named in the brief first, then the rest of
+  // the rooms that turned up checked items in the spreadsheet.
+  var ROOMS = [
+    { id:"kitchen",  code:"01", label:"Kitchen"  },
+    { id:"dining",   code:"02", label:"Dining"   },
+    { id:"bedroom",  code:"03", label:"Bedroom"  },
+    { id:"bathroom", code:"04", label:"Bathroom" },
+    { id:"living",   code:"05", label:"Living"   },
+    { id:"balcony",  code:"06", label:"Balcony"  },
+    { id:"general",  code:"07", label:"General"  }
+  ];
+
+  // Sourced items: full spec cards. Add more objects here (grouped by
+  // room -> category) as products get confirmed — the matching
+  // checklist placeholder (same room/category/name) drops out on its own.
+  // Several items with the same "fulfills" are options for one slot: the
+  // room shows the leading option, and clicking it opens a page comparing
+  // them all. The first listed leads unless one has lead:true or the
+  // viewer picks another.
+  var ITEMS = {
+    bedroom: {
+      "Decor": [
+        {
+          code:"B-01",
+          name:"Elegant Berry Motif Wallpaper",
+          brand:"Happywall",
+          material:"Green & orange berry motif on cream · L pattern scale",
+          dims:"Made to measure — priced by wall width × height",
+          price:null,
+          currency:"AUD",
+          url:"https://www.happywall.com/au/elegant-berry-motif-in-green-orange-l-wallpaper",
+          img:"../berry-wallpaper.jpg",
+          note:"Feature wall"
+        }
+      ]
+    },
+    living: {
+      "Seating": [
+        {
+          code:"L-01",
+          name:"Owen II 2 Seater Sofa",
+          fulfills:"Sofa",
+          brand:"Castlery",
+          material:"Basketweave, Caramel · Walnut legs",
+          dims:"W180 × D99.5 × H79 cm · seat H47 cm",
+          price:1799,
+          currency:"AUD",
+          url:"https://www.castlery.com/au/products/owen-ii-2-seater-sofa?leg_color=walnut&material=basketweave_caramel",
+          img:"../owen-ii-sofa.jpg",
+          note:null
+        },
+        {
+          code:"L-01",
+          name:"LUKA Fabric Sofa",
+          fulfills:"Sofa",
+          brand:"Freedom",
+          material:"Fabric, Friday Natural · black timber legs",
+          dims:"Available in 10+ fabric colours",
+          price:1679,
+          currency:"AUD",
+          url:"https://www.freedom.com.au/product/24718486",
+          img:"../luka-sofa.jpg",
+          note:"Sale price (was $2,399)"
+        },
+        {
+          code:"L-02",
+          name:"Micah Bamboo Foldable Dining Chair",
+          brand:"Temple & Webster",
+          material:"Bamboo frame, walnut finish · rattan cane seat & back",
+          dims:"Folds flat for storage",
+          price:94.95,
+          currency:"AUD",
+          url:"https://www.templeandwebster.com.au/Micah-Bamboo-Foldable-Dining-Chair-LVBS1337.html",
+          img:"../micah-folding-chair.jpg",
+          note:"Black Friday sale price"
+        },
+        {
+          code:"L-06",
+          name:"Lenno Dining Chair",
+          fulfills:"Living room chair",
+          brand:"Silva Craft",
+          material:"Tweed (polyester/acetate), Clay · natural oak base",
+          dims:"W59 × D62 × H82 cm · seat D47.5 × W43 × SH47.5 cm",
+          price:339.50,
+          currency:"AUD",
+          url:null,
+          img:"../lenno-dining-chair.jpg",
+          note:"Temple & Webster, product code 13920160 (link not captured) · sold as a set of 2 ($679/pair), price shown is per chair · 360° swivel, no castors"
+        }
+      ],
+      "Soft Furnishings": [
+        {
+          code:"L-04",
+          name:"Plantae Pillow",
+          fulfills:"Cushions",
+          brand:"Chirnside",
+          material:"Chain-stitched, Olive · 60% acrylic / 40% wool on cotton jacquard, removable cover",
+          dims:"46 × 46 cm (18\" × 18\")",
+          price:80,
+          currency:"AUD",
+          url:"https://shop.chirnside.studio/products/plantae-pillow",
+          img:"../plantae-pillow.jpg",
+          note:null
+        }
+      ],
+      "Decor": [
+        {
+          code:"L-05",
+          name:"Abstract Print, Timber Frame",
+          fulfills:"Wall art / prints",
+          brand:null,
+          material:"Giclée print on paper · natural timber frame",
+          dims:null,
+          price:null,
+          currency:"AUD",
+          url:null,
+          img:"../living-wall-art.jpg",
+          note:null,
+          owned:true
+        }
+      ],
+      "Office": [
+        {
+          code:"L-03",
+          name:"Ludvig Office Chair",
+          fulfills:"Office chair",
+          brand:"Aurelia Home · Freedom",
+          material:"Polyester, Wine",
+          dims:"Swivel, tilt + height adjust · stock 5-star base on castors",
+          price:319,
+          currency:"AUD",
+          url:"https://www.freedom.com.au/product/10010695",
+          img:"../ludvig-office-chair.jpg",
+          note:"Swap the castors for stem-mount glides (~10/11mm grip stem, ~$20) + felt pads — floor-safe and keeps the tilt/height adjustment"
+        },
+        {
+          code:"L-03",
+          name:"Bentwood High Back Executive Office Chair",
+          fulfills:"Office chair",
+          brand:"Temple & Webster",
+          material:"Faux leather, Black · walnut bentwood shell",
+          dims:"High back · swivel + height adjust · chrome 5-star base on castors",
+          price:399,
+          currency:"AUD",
+          url:"https://www.templeandwebster.com.au/Bentwood-High-Back-Executive-Faux-Leather-Office-Chair-TMPL3848.html",
+          img:"../bentwood-office-chair.jpg",
+          note:"Black Friday sale price"
+        }
+      ]
+    }
+  };
+
+  // Checklist items without a sourced product yet, grouped the same
+  // way: room -> category -> [{name, note}]. Generated from the
+  // household_checklist.xlsx "Get?" column marked x.
+  var PENDING_ROOMS = [{"id": "kitchen", "label": "Kitchen", "categories": {"Cookware": [{"name": "Frying pan (large)", "note": null, "est": 60}, {"name": "Saucepan (small)", "note": null, "est": 35}, {"name": "Saucepan (medium)", "note": null, "est": 45}, {"name": "Saucepan (large)", "note": null, "est": 60}, {"name": "Wok", "note": null, "est": 70}, {"name": "Casserole / Dutch oven", "note": null, "est": 150}], "Bakeware": [{"name": "Baking trays", "note": null, "est": 25}, {"name": "Mixing bowls", "note": null, "est": 40}], "Knives & Boards": [{"name": "Chef's knife", "note": null, "est": 90}, {"name": "Paring knife", "note": null, "est": 25}, {"name": "Bread knife", "note": null, "est": 35}, {"name": "Cutting board (wood)", "note": null, "est": 45}], "Utensils": [{"name": "Serving spoons", "note": null, "est": 15}, {"name": "Tongs", "note": null, "est": 15}, {"name": "Ladle", "note": null, "est": 12}, {"name": "Spatula / turner", "note": null, "est": 15}, {"name": "Vegetable peeler", "note": null, "est": 8}, {"name": "Box grater", "note": null, "est": 15}, {"name": "Can opener", "note": null, "est": 12}, {"name": "Bottle opener", "note": null, "est": 10}, {"name": "Measuring cups & spoons", "note": null, "est": 20}], "Cutlery (flatware)": [{"name": "Dinner knives", "note": null, "est": 40}, {"name": "Dinner forks", "note": null, "est": 40}, {"name": "Teaspoons", "note": null, "est": 25}, {"name": "Dessert spoons", "note": null, "est": 25}], "Crockery": [{"name": "Dinner plates", "note": null, "est": 60}, {"name": "Side plates", "note": null, "est": 40}, {"name": "Bowls (cereal/pasta)", "note": null, "est": 50}, {"name": "Mugs", "note": null, "est": 35}, {"name": "Teacups & saucers", "note": null, "est": 60}], "Glassware": [{"name": "Water glasses", "note": null, "est": 35}, {"name": "Red wine glasses", "note": null, "est": 45}, {"name": "Tumblers / highball glasses", "note": null, "est": 35}], "Storage": [{"name": "Food storage containers", "note": null, "est": 50}, {"name": "Glass storage jars", "note": null, "est": 30}, {"name": "Spice rack / jars", "note": null, "est": 40}], "Appliances (large)": [{"name": "Fridge / freezer", "note": null, "est": 1800}], "Appliances (small)": [{"name": "Kettle", "note": null, "est": 60}, {"name": "Toaster", "note": null, "est": 55}], "Linen & Small Items": [{"name": "Oven mitts", "note": null, "est": 20}, {"name": "Tea towels", "note": null, "est": 20}, {"name": "Dish cloths", "note": null, "est": 12}], "Waste": [{"name": "Kitchen bin", "note": null, "est": 60}], "Cleaning": [{"name": "Dish soap dispenser", "note": null, "est": 15}, {"name": "Sponge + holder", "note": null, "est": 12}, {"name": "Bin liners", "note": null, "est": 10}]}}, {"id": "dining", "label": "Dining", "categories": {"Tableware": [{"name": "Coasters", "note": null, "est": 20}]}}, {"id": "bedroom", "label": "Bedroom", "categories": {"Furniture": [{"name": "Bed frame", "note": "Custom maybe", "est": 900}, {"name": "Mattress", "note": null, "est": 900}, {"name": "Bedside tables", "note": null, "est": 150}, {"name": "Chest of drawers", "note": null, "est": 450}, {"name": "Wardrobe", "note": null, "est": 700}], "Lighting": [{"name": "Bedside lamp", "note": null, "est": 60}], "Bedding": [{"name": "Fitted sheet", "note": null, "est": 60}, {"name": "Flat sheet", "note": null, "est": 50}, {"name": "Pillowcases", "note": null, "est": 30}, {"name": "Doona / duvet", "note": null, "est": 150}, {"name": "Doona cover", "note": null, "est": 90}, {"name": "Mattress protector", "note": null, "est": 60}], "Soft Furnishings": [{"name": "Rug", "note": null, "est": 250}], "Storage": [{"name": "Under-bed storage", "note": null, "est": 45}, {"name": "Laundry hamper", "note": null, "est": 40}], "Decor": [{"name": "Wall art", "note": null, "est": 80}]}}, {"id": "bathroom", "label": "Bathroom", "categories": {"Fixtures & Accessories": [{"name": "Bath mat", "note": null, "est": 30}, {"name": "Soap dispenser", "note": null, "est": 20}], "Linen": [{"name": "Bath towels", "note": null, "est": 100}, {"name": "Hand towels", "note": null, "est": 40}, {"name": "Face washers", "note": null, "est": 25}]}}, {"id": "living", "label": "Living", "categories": {"Seating": [{"name": "Sofa", "note": null, "est": 1799}, {"name": "Occasional stool", "note": null, "est": 90}], "Tables": [{"name": "Coffee table", "note": null, "est": 350}, {"name": "Side / end table", "note": null, "est": 180}], "Storage & Media": [{"name": "TV unit / media console", "note": "Custom Made", "est": 1200}], "Lighting": [{"name": "Table lamp", "note": null, "est": 90}], "Soft Furnishings": [{"name": "Cushions", "note": "Just one", "est": 40}, {"name": "Throw blanket", "note": null, "est": 60}, {"name": "Curtains / blinds", "note": null, "est": 300}], "Entertainment": [{"name": "TV", "note": null, "est": 900}, {"name": "Soundbar / speakers", "note": null, "est": 250}], "Decor": [{"name": "Wall art / prints", "note": null, "est": 120}, {"name": "Indoor plants + planters", "note": null, "est": 60}], "Office": [{"name": "Desk", "note": null, "est": 350}, {"name": "Office chair", "note": null, "est": 300}, {"name": "Bookshelf / filing storage", "note": null, "est": 200}, {"name": "Desk lamp", "note": null, "est": 45}], "Entryway": [{"name": "Shoe rack", "note": null, "est": 90}]}}, {"id": "balcony", "label": "Balcony", "categories": {"Greenery": [{"name": "Planters / pots", "note": null, "est": 35}, {"name": "Outdoor plants", "note": null, "est": 25}], "Other": [{"name": "Outdoor lighting (string lights)", "note": null, "est": 30}]}}, {"id": "general", "label": "General", "categories": {"Cleaning": [{"name": "Vacuum cleaner", "note": null, "est": 350}, {"name": "Broom + dustpan", "note": null, "est": 25}]}}]
+;
+
+  // Moodboard pins: images/screenshots with an optional caption, source
+  // link and room tag, grouped under their section heading in the order
+  // sections first appear. Add objects here as things get sent through —
+  // {img, caption, source, room, section}. Set tall:true on portrait
+  // shots so they span two rows of the grid.
+  var MOODBOARD = [
+    { section:"Real Estate Photos", img:"../moodboard/empty-living-balcony.jpg",  caption:"Living room & balcony doors", room:"Living", tall:true },
+    { section:"Real Estate Photos", img:"../moodboard/empty-open-plan.jpg",       caption:"Kitchen, living & bedroom", room:"Living" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-kitchen.jpg",         caption:"Kitchen",                  room:"Kitchen", tall:true },
+    { section:"Real Estate Photos", img:"../moodboard/empty-living-long.jpg",     caption:"Living room from the kitchen", room:"Living" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-kitchen-bedroom.jpg", caption:"Kitchen & bedroom doorway", room:"Kitchen" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-bedroom.jpg",          caption:"Bed wall & balcony door",  room:"Bedroom" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-bedroom-window.jpg",   caption:"Bedroom window",           room:"Bedroom" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-bedroom-wardrobe.jpg", caption:"Ensuite door, wardrobe removed", room:"Bedroom" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-living-entry.jpg",     caption:"Living room toward the entry", room:"Living" },
+    { section:"Real Estate Photos", img:"../moodboard/empty-ensuite.jpg",          caption:"Ensuite",                  room:"Bathroom" },
+    { section:"Real Estate Originals", img:"../moodboard/living-kitchen.jpg",   caption:"Living, dining & kitchen", room:"Living" },
+    { section:"Real Estate Originals", img:"../moodboard/bedroom.jpg",          caption:"Bed wall & balcony door",  room:"Bedroom" },
+    { section:"Real Estate Originals", img:"../moodboard/bedroom-window.jpg",   caption:"Bedroom window",           room:"Bedroom" },
+    { section:"Real Estate Originals", img:"../moodboard/bedroom-wardrobe.jpg", caption:"Wardrobe & ensuite door",  room:"Bedroom" },
+    { section:"Real Estate Originals", img:"../moodboard/ensuite.jpg",          caption:"Ensuite",                  room:"Bathroom" },
+    { section:"Real Estate Originals", img:"../moodboard/open-plan.jpg",        caption:"Kitchen, living & bedroom", room:"Living" },
+    { section:"Real Estate Originals", img:"../moodboard/living-balcony.jpg",   caption:"Living room & balcony doors", room:"Living", tall:true },
+    { section:"Real Estate Originals", img:"../moodboard/kitchen-bedroom.jpg",  caption:"Kitchen & bedroom doorway", room:"Kitchen" },
+    { section:"Real Estate Originals", img:"../moodboard/kitchen.jpg",          caption:"Kitchen",                  room:"Kitchen", tall:true },
+    { section:"Real Estate Originals", img:"../moodboard/living-long.jpg",      caption:"Living room from the kitchen", room:"Living" }
+  ];
+
+  var fmt = new Intl.NumberFormat("en-AU", { style:"currency", currency:"AUD", maximumFractionDigits:0 });
+  var fmtCents = new Intl.NumberFormat("en-AU", { style:"currency", currency:"AUD" });
+
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  // Items added from the "+ Add item" form live only in this browser,
+  // nested the same way as ITEMS: customItems[roomId][category] = [item].
+  var CUSTOM_KEY = "new-home-schedule:custom-items";
+  var customItems = {};
+  try { customItems = JSON.parse(localStorage.getItem(CUSTOM_KEY)) || {}; } catch(e){}
+  function saveCustomItems(){
+    try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customItems)); } catch(e){}
+    queueSync();
+  }
+  function addCustomItem(roomId, cat, item){
+    if (!customItems[roomId]) customItems[roomId] = {};
+    if (!customItems[roomId][cat]) customItems[roomId][cat] = [];
+    customItems[roomId][cat].push(item);
+    saveCustomItems();
+  }
+  function removeCustomItem(roomId, cat, id){
+    if (!customItems[roomId] || !customItems[roomId][cat]) return;
+    customItems[roomId][cat] = customItems[roomId][cat].filter(function(i){ return i.id !== id; });
+    saveCustomItems();
+  }
+
+  // Items removed from the schedule (built-in or custom) are hidden, not
+  // deleted outright — key -> {room, cat, name} so Settings can list and
+  // restore them. Keyed the same way as itemKey() below.
+  var REMOVED_KEY = "new-home-schedule:removed";
+  var removedItems = {};
+  try { removedItems = JSON.parse(localStorage.getItem(REMOVED_KEY)) || {}; } catch(e){}
+  function saveRemovedItems(){
+    try { localStorage.setItem(REMOVED_KEY, JSON.stringify(removedItems)); } catch(e){}
+    queueSync();
+  }
+  function isRemoved(key){ return !!removedItems[key]; }
+  function markRemoved(key, info){ removedItems[key] = info; saveRemovedItems(); renderRemovedList(); }
+  function restoreRemoved(key){
+    delete removedItems[key];
+    saveRemovedItems();
+    renderRemovedList();
+    render(); route(); updateCollapseAllBtn();
+  }
+
+  function renderRemovedList(){
+    var box = document.getElementById("removed-list");
+    if (!box) return;
+    var keys = Object.keys(removedItems);
+    if (!keys.length){
+      box.innerHTML = '<li class="build-empty">Nothing removed.</li>';
+      return;
+    }
+    box.innerHTML = "";
+    keys.forEach(function(k){
+      var info = removedItems[k];
+      var li = document.createElement("li");
+      li.appendChild(el("span", null, info.room + " · " + info.cat + " · " + info.name));
+      var btn = el("button", "panel-btn", "Restore");
+      btn.type = "button";
+      btn.addEventListener("click", function(){ restoreRemoved(k); });
+      li.appendChild(btn);
+      box.appendChild(li);
+    });
+  }
+
+  var PLACEHOLDER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150">' +
+    '<rect width="200" height="150" fill="#E4E0D8"/>' +
+    '<text x="100" y="80" font-family="sans-serif" font-size="13" fill="#8C8740" text-anchor="middle">No photo</text></svg>';
+  var PLACEHOLDER_IMG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PLACEHOLDER_SVG);
+
+  // Every sourced item for a room/category — built-in plus custom,
+  // minus anything removed. sourcedNames() and slotsFor() both read
+  // through this so adding or removing an item is visible everywhere
+  // (counts, totals, "already sourced" checks) with one change.
+  function mergedItems(roomId, cat){
+    var base = ((ITEMS[roomId] || {})[cat]) || [];
+    var custom = ((customItems[roomId] || {})[cat]) || [];
+    return base.concat(custom).filter(function(item){
+      return !isRemoved(itemKey(roomId, cat, item.name));
+    });
+  }
+
+  function sourcedNames(roomId, cat){
+    return mergedItems(roomId, cat).map(function(i){ return (i.fulfills || i.name).trim().toLowerCase(); });
+  }
+
+  // Group a category's sourced items into slots: {name, options[]}.
+  function slotsFor(roomId, cat){
+    var out = [], byName = {};
+    mergedItems(roomId, cat).forEach(function(item){
+      var name = item.fulfills || item.name;
+      var k = name.trim().toLowerCase();
+      if (!byName[k]){ byName[k] = { name:name, options:[] }; out.push(byName[k]); }
+      byName[k].options.push(item);
+    });
+    return out;
+  }
+
+  // Leading option picks live in localStorage, keyed like bought ticks.
+  var LEAD_KEY = "new-home-schedule:lead";
+  var leads = {};
+  try { leads = JSON.parse(localStorage.getItem(LEAD_KEY)) || {}; } catch(e){}
+
+  function leadOf(key, slot){
+    var picked = slot.options.filter(function(o){ return o.name === leads[key]; })[0];
+    return picked || slot.options.filter(function(o){ return o.lead; })[0] || slot.options[0];
+  }
+
+  function setLead(key, name){
+    leads[key] = name;
+    try { localStorage.setItem(LEAD_KEY, JSON.stringify(leads)); } catch(e){}
+    queueSync();
+  }
+
+  function priceText(p){ return p % 1 ? fmtCents.format(p) : fmt.format(p); }
+
+  function roomItemCount(roomId){
+    var n = 0;
+    var cats = Object.keys(ITEMS[roomId] || {});
+    Object.keys(customItems[roomId] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+    cats.forEach(function(c){ n += slotsFor(roomId, c).length; });
+    return n;
+  }
+
+  function roomPendingCount(roomData){
+    if (!roomData) return 0;
+    var n = 0;
+    Object.keys(roomData.categories).forEach(function(cat){
+      var done = sourcedNames(roomData.id, cat);
+      roomData.categories[cat].forEach(function(it){
+        if (done.indexOf(it.name.trim().toLowerCase()) === -1 && !isRemoved(itemKey(roomData.id, cat, it.name))) n++;
+      });
+    });
+    return n;
+  }
+
+  // Bought ticks live in this browser's localStorage, keyed by
+  // room|category|name. A sourced card uses its "fulfills" name, so a
+  // placeholder ticked before its product is found stays ticked after.
+  var BOUGHT_KEY = "new-home-schedule:bought";
+  var bought = {};
+  // Office and Entryway were folded into Living; old ticks are remapped.
+  var MOVED = { "office|Furniture|":"living|Office|", "office|Lighting|":"living|Office|", "entryway|Furniture|":"living|Entryway|" };
+  try {
+    (JSON.parse(localStorage.getItem(BOUGHT_KEY)) || []).forEach(function(k){
+      Object.keys(MOVED).forEach(function(from){ if (k.indexOf(from) === 0) k = MOVED[from] + k.slice(from.length); });
+      bought[k] = true;
+    });
+  } catch(e){}
+  saveBought();
+
+  function itemKey(roomId, cat, name){
+    return [roomId, cat, name.trim().toLowerCase()].join("|");
+  }
+
+  // Which categories are collapsed, per room|category, in this browser.
+  var COLLAPSED_KEY = "new-home-schedule:collapsed";
+  var collapsedCats = {};
+  try { collapsedCats = JSON.parse(localStorage.getItem(COLLAPSED_KEY)) || {}; } catch(e){}
+
+  function saveCollapsedCats(){
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsedCats)); } catch(e){}
+  }
+
+  // Every room|category key that actually appears in the schedule
+  // (sourced items, pending items, or both), across all rooms.
+  function allCatKeys(){
+    var keys = [];
+    ROOMS.forEach(function(r){
+      var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
+      var cats = pd ? Object.keys(pd.categories).slice() : [];
+      Object.keys(ITEMS[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+      Object.keys(customItems[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+      cats.forEach(function(c){ keys.push(r.id + "|" + c); });
+    });
+    return keys;
+  }
+
+  function updateCollapseAllBtn(){
+    var btn = document.getElementById("collapse-all");
+    var keys = allCatKeys();
+    var allCollapsed = keys.length > 0 && keys.every(function(k){ return collapsedCats[k]; });
+    btn.textContent = allCollapsed ? "Expand all" : "Collapse all";
+  }
+
+  document.getElementById("collapse-all").addEventListener("click", function(){
+    var keys = allCatKeys();
+    var allCollapsed = keys.length > 0 && keys.every(function(k){ return collapsedCats[k]; });
+    keys.forEach(function(k){
+      if (allCollapsed) delete collapsedCats[k]; else collapsedCats[k] = true;
+    });
+    saveCollapsedCats();
+    render();
+    route();
+    updateCollapseAllBtn();
+  });
+
+  function saveBought(){
+    try { localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought))); } catch(e){}
+    queueSync();
+  }
+
+  // ---- Cross-device sync: state.json in the repo ----
+  // Bought ticks, removed items, custom items and leading options are
+  // mirrored to state.json on GitHub. Each save is a 3-way merge: we diff
+  // this device's changes against the last state we synced, apply just
+  // those onto the latest remote copy, and write it back. So two devices
+  // editing different things don't overwrite each other.
+  var SYNC_OWNER = "Schippeaux";
+  var SYNC_REPO = "new-home-schedule";
+  var SYNC_BRANCH = "claude/nice-hypatia-wzi05g";
+  var SYNC_PATH = "state.json";
+  var syncBase = null;        // flattened state as of the last sync
+  var syncSha = null;         // GitHub blob sha of state.json
+  var syncReady = false;      // set once the startup pull has finished
+  var syncDirty = false;      // local changes not yet pushed
+  var syncTimer = null;
+  var syncInFlight = false;
+  var syncAgain = false;
+
+  function syncToken(){
+    try { return localStorage.getItem("github-token") || ""; } catch(e){ return ""; }
+  }
+  function utf8ToB64(s){ return btoa(unescape(encodeURIComponent(s))); }
+  function b64ToUtf8(s){ return decodeURIComponent(escape(atob(s.replace(/\n/g, "")))); }
+  function setSync(text){
+    var n = document.getElementById("sync-status");
+    if (n) n.textContent = text;
+  }
+
+  function snapshotOf(){
+    return { bought: Object.keys(bought), leads: leads, removed: removedItems, custom: customItems };
+  }
+  // Flatten to path -> value so changes can be diffed item by item.
+  function flatten(s){
+    var f = {};
+    (s.bought || []).forEach(function(k){ f["b:" + k] = "1"; });
+    Object.keys(s.leads || {}).forEach(function(k){ f["l:" + k] = JSON.stringify(s.leads[k]); });
+    Object.keys(s.removed || {}).forEach(function(k){ f["r:" + k] = JSON.stringify(s.removed[k]); });
+    Object.keys(s.custom || {}).forEach(function(room){
+      Object.keys(s.custom[room]).forEach(function(cat){
+        s.custom[room][cat].forEach(function(it){
+          f["c:" + room + "|" + cat + "|" + it.id] = JSON.stringify(it);
+        });
+      });
+    });
+    return f;
+  }
+  function unflatten(f){
+    var s = { bought: [], leads: {}, removed: {}, custom: {} };
+    Object.keys(f).forEach(function(p){
+      var kind = p.charAt(0), rest = p.slice(2), v = f[p];
+      if (kind === "b") s.bought.push(rest);
+      else if (kind === "l") s.leads[rest] = JSON.parse(v);
+      else if (kind === "r") s.removed[rest] = JSON.parse(v);
+      else if (kind === "c"){
+        var parts = rest.split("|");
+        var room = parts.shift(), id = parts.pop(), cat = parts.join("|");
+        if (!s.custom[room]) s.custom[room] = {};
+        if (!s.custom[room][cat]) s.custom[room][cat] = [];
+        s.custom[room][cat].push(JSON.parse(v));
+      }
+    });
+    return s;
+  }
+
+  // Replace the in-memory state and this browser's cached copy.
+  function applySnapshot(s){
+    bought = {};
+    (s.bought || []).forEach(function(k){ bought[k] = true; });
+    leads = s.leads || {};
+    removedItems = s.removed || {};
+    customItems = s.custom || {};
+    try {
+      localStorage.setItem(BOUGHT_KEY, JSON.stringify(Object.keys(bought)));
+      localStorage.setItem(LEAD_KEY, JSON.stringify(leads));
+      localStorage.setItem(REMOVED_KEY, JSON.stringify(removedItems));
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(customItems));
+    } catch(e){}
+  }
+
+  function refreshAll(){
+    render(); route(); updateCollapseAllBtn(); renderRemovedList();
+  }
+
+  function fetchRemote(){
+    var url = "https://api.github.com/repos/" + SYNC_OWNER + "/" + SYNC_REPO + "/contents/" + SYNC_PATH + "?ref=" + SYNC_BRANCH;
+    return fetch(url, { headers: { "Authorization": "Bearer " + syncToken(), "Accept": "application/vnd.github+json" } })
+      .then(function(r){
+        if (r.status === 404) return { sha: null, data: null };
+        if (!r.ok) throw new Error("GitHub returned " + r.status);
+        return r.json().then(function(j){
+          return { sha: j.sha, data: JSON.parse(b64ToUtf8(j.content)) };
+        });
+      });
+  }
+
+  // Pull the latest remote state (used on load). Skipped if this device
+  // has unpushed changes, so it never throws away a tick in progress.
+  function pullRemote(){
+    if (syncDirty || syncInFlight || syncTimer) return Promise.resolve(false);
+    return fetchRemote().then(function(res){
+      syncSha = res.sha;
+      applySnapshot(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+      syncBase = flatten(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+      syncDirty = false;
+      setSync("Synced ✓");
+      return true;
+    });
+  }
+
+  function queueSync(){
+    syncDirty = true;
+    if (!syncReady) return;
+    if (!syncToken()){
+      setSync("Saved in this browser only · add a GitHub token on the home page to sync");
+      return;
+    }
+    clearTimeout(syncTimer);
+    setSync("Unsynced changes…");
+    syncTimer = setTimeout(function(){ syncTimer = null; pushState(0); }, 1500);
+  }
+
+  function pushState(attempt){
+    if (syncInFlight){ syncAgain = true; return; }
+    if (!syncToken()) return;
+    syncInFlight = true;
+    setSync("Saving…");
+    var retry = false;
+
+    fetchRemote().then(function(res){
+      var base = syncBase || {};
+      // Re-read local state here, so edits made while the fetch was running
+      // are included rather than dropped.
+      var localFlat = flatten(snapshotOf());
+      var merged = res.data ? flatten(res.data) : {};
+      var paths = Object.keys(base).concat(Object.keys(localFlat));
+      var changed = false;
+      paths.forEach(function(p){
+        if (localFlat[p] !== base[p]){
+          changed = true;
+          if (p in localFlat) merged[p] = localFlat[p];
+          else delete merged[p];
+        }
+      });
+
+      if (!changed){
+        syncSha = res.sha;
+        syncBase = flatten(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+        if (res.data){ applySnapshot(res.data); refreshAll(); }
+        setSync("Synced ✓");
+        return;
+      }
+
+      var newState = unflatten(merged);
+      var body = JSON.stringify(newState, null, 2);
+      var payload = {
+        message: "Update schedule state — " + new Date().toISOString().slice(0, 16).replace("T", " "),
+        content: utf8ToB64(body),
+        branch: SYNC_BRANCH
+      };
+      if (res.sha) payload.sha = res.sha;
+
+      return fetch("https://api.github.com/repos/" + SYNC_OWNER + "/" + SYNC_REPO + "/contents/" + SYNC_PATH, {
+        method: "PUT",
+        headers: { "Authorization": "Bearer " + syncToken(), "Accept": "application/vnd.github+json", "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(function(r){
+        if (r.status === 409 || r.status === 422){
+          var conflict = new Error("conflict");
+          conflict.conflict = true;
+          throw conflict;
+        }
+        if (!r.ok) throw new Error("GitHub returned " + r.status);
+        return r.json().then(function(j){
+          syncSha = j.content.sha;
+          syncBase = merged;
+          applySnapshot(newState);
+          refreshAll();
+          syncDirty = false;
+          setSync("Synced ✓");
+        });
+      });
+    }).catch(function(err){
+      if (err && err.conflict && attempt < 2){
+        retry = true;
+        return;
+      }
+      syncDirty = true;
+      setSync("Couldn't sync (" + (err && err.message ? err.message : "error") + ") · will retry on next change");
+    }).then(function(){
+      syncInFlight = false;
+      if (retry) return pushState(attempt + 1);
+      if (syncAgain){ syncAgain = false; queueSync(); }
+    });
+  }
+
+  function syncStart(){
+    if (!syncToken()){
+      setSync("Saved in this browser only · add a GitHub token on the home page to sync");
+      syncReady = true;
+      return;
+    }
+    setSync("Loading…");
+    pullRemote().then(function(){
+      syncReady = true;
+      refreshAll();
+      if (syncDirty) queueSync();
+    }).catch(function(){
+      syncReady = true;
+      setSync("Offline · showing this browser's copy");
+    });
+  }
+
+  function addBuyBox(card, key, name){
+    var label = el("label", "buy");
+    label.title = "Mark as bought";
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = !!bought[key];
+    box.setAttribute("aria-label", "Bought: " + name);
+    card.classList.toggle("bought", box.checked);
+    box.addEventListener("change", function(){
+      if (box.checked) bought[key] = true; else delete bought[key];
+      card.classList.toggle("bought", box.checked);
+      saveBought();
+      updateBoughtStats();
+    });
+    label.appendChild(box);
+    card.appendChild(label);
+  }
+
+  function updateBoughtStats(){
+    var all = document.querySelectorAll("#rooms .card").length;
+    var got = document.querySelectorAll("#rooms .card.bought").length;
+    document.getElementById("bought-count").textContent = got + " of " + all + " bought";
+    Array.prototype.forEach.call(document.querySelectorAll("#rooms .room"), function(section){
+      var n = section.querySelectorAll(".card.bought").length;
+      section.querySelector(".room-bought").textContent = n ? " · " + n + " bought" : "";
+    });
+  }
+
+  // Shared "remove this" control for both sourced and placeholder cards.
+  // onRemove does the actual bookkeeping (and its own re-render); this
+  // just asks for confirmation first.
+  function addRemoveBtn(card, label, onRemove){
+    var rm = el("button", "remove-item", "✕");
+    rm.type = "button";
+    rm.title = "Remove this item";
+    rm.setAttribute("aria-label", "Remove " + label);
+    rm.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if (!confirm('Remove "' + label + '"? You can restore it later from Settings → Removed items.')) return;
+      onRemove();
+    });
+    card.appendChild(rm);
+  }
+
+  // opts (optional): {href, pill, view, tag, remove, removeLabel} override
+  // the product link for multi-option slots/the options page, and add a
+  // remove control when a remove() callback is supplied.
+  function buildCard(item, key, opts){
+    opts = opts || {};
+    var card = el("div", "card");
+    card.dataset.owned = item.owned ? "1" : "0";
+
+    var shot = el("div", "shot");
+    shot.appendChild(el("span", "tag", opts.tag || item.code));
+    if (opts.pill) shot.appendChild(el("span", "opt-pill", opts.pill));
+    var img = document.createElement("img");
+    img.src = item.img;
+    img.alt = item.name;
+    img.loading = "lazy";
+    shot.appendChild(img);
+    card.appendChild(shot);
+
+    // The name link stretches over the whole card: multi-option slots go
+    // to their options page, everything else opens the detail card.
+    var body = el("div", "body");
+    var link = el("a", "name", item.name);
+    if (opts.href){
+      link.href = opts.href;
+    } else {
+      link.href = "#";
+      link.addEventListener("click", function(e){
+        e.preventDefault();
+        openDetail(item, opts.tag);
+      });
+    }
+    body.appendChild(link);
+    if (item.brand || item.material){
+      var materialLine = item.brand ? (item.brand + " — " + item.material) : item.material;
+      body.appendChild(el("span", "material", materialLine));
+    }
+    if (item.note){
+      body.appendChild(el("span", "material", item.note));
+    }
+    if (item.dims){
+      body.appendChild(el("span", "spec", item.dims));
+    }
+    var foot = el("div", "foot");
+    if (typeof item.price === "number"){
+      foot.appendChild(el("span", "price", priceText(item.price)));
+    } else if (item.owned){
+      foot.appendChild(el("span", "price", "Already have"));
+    } else {
+      foot.appendChild(el("span", "price tbc", "Price TBC"));
+    }
+    foot.appendChild(el("span", "view", opts.view || "Details →"));
+    if (foot.childNodes.length){
+      body.appendChild(foot);
+    }
+    card.appendChild(body);
+    if (key) addBuyBox(card, key, item.name);
+    if (opts.remove) addRemoveBtn(card, opts.removeLabel || item.name, opts.remove);
+
+    return card;
+  }
+
+  // Detail card: everything about one product, with the shop link.
+  function openDetail(item, tag){
+    var d = document.getElementById("detail");
+    var box = document.getElementById("detail-body");
+    box.innerHTML = "";
+
+    var shot = el("div", "d-shot");
+    var img = document.createElement("img");
+    img.src = item.img;
+    img.alt = item.name;
+    shot.appendChild(img);
+    box.appendChild(shot);
+
+    var info = el("div", "d-info");
+    info.appendChild(el("span", "tag d-tag", tag || item.code));
+    info.appendChild(el("h3", "d-name")).textContent = item.name;
+    var rows = [
+      ["Brand", item.brand],
+      ["Material", item.material],
+      ["Details", item.dims],
+      ["Note", item.note]
+    ];
+    var dl = el("dl", "d-rows");
+    rows.forEach(function(r){
+      if (!r[1]) return;
+      dl.appendChild(el("dt", null)).textContent = r[0];
+      dl.appendChild(el("dd", null)).textContent = r[1];
+    });
+    info.appendChild(dl);
+
+    var price = typeof item.price === "number" ? priceText(item.price)
+      : item.owned ? "Already have" : "Price TBC";
+    info.appendChild(el("div", "d-price")).textContent = price;
+
+    if (item.url){
+      var a = el("a", "d-link", "View on website →");
+      a.href = item.url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      info.appendChild(a);
+    }
+    box.appendChild(info);
+
+    if (d.showModal) d.showModal(); else d.setAttribute("open", "");
+    d.scrollTop = 0;
+  }
+
+  (function(){
+    var d = document.getElementById("detail");
+    document.getElementById("detail-close").addEventListener("click", function(){ d.close(); });
+    // click on the dimmed backdrop (the dialog element itself) closes it
+    d.addEventListener("click", function(e){ if (e.target === d) d.close(); });
+  })();
+
+  function buildPlaceholder(name, note, est, key, removeFn){
+    var card = el("div", "card placeholder");
+    var shot = el("div", "shot");
+    shot.appendChild(el("span", "pname", name));
+    if (note){
+      shot.appendChild(el("span", "pnote", note));
+    }
+    if (typeof est === "number"){
+      shot.appendChild(el("span", "pest", "~" + fmt.format(est) + " est."));
+    }
+    shot.appendChild(el("span", "label", "Not sourced yet"));
+    card.appendChild(shot);
+    addBuyBox(card, key, name);
+    if (removeFn) addRemoveBtn(card, name, removeFn);
+    return card;
+  }
+
+  function buildRoom(room, pendingData){
+    var section = el("section", "room");
+    section.id = "panel-" + room.id;
+    section.setAttribute("role", "tabpanel");
+
+    var sourcedCats = ITEMS[room.id] || {};
+    var pendingCats = pendingData ? pendingData.categories : {};
+
+    // union of category names in checklist order, then any category
+    // that only has sourced or custom-added items.
+    var catOrder = Object.keys(pendingCats);
+    Object.keys(sourcedCats).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
+    Object.keys(customItems[room.id] || {}).forEach(function(c){ if (catOrder.indexOf(c) === -1) catOrder.push(c); });
+
+    var sourcedCount = roomItemCount(room.id);
+    var pendingCount = roomPendingCount(pendingData);
+    var total = sourcedCount + pendingCount;
+
+    var head = el("div", "room-head");
+    head.appendChild(el("h2", null, room.label));
+    var stat = el("span", "room-stat", sourcedCount + " of " + total + " sourced");
+    stat.appendChild(el("span", "room-bought"));
+    head.appendChild(stat);
+    section.appendChild(head);
+
+    catOrder.forEach(function(cat){
+      var catKey = room.id + "|" + cat;
+      var details = document.createElement("details");
+      details.className = "cat-group";
+      details.dataset.catKey = catKey;
+      details.open = !collapsedCats[catKey];
+      details.addEventListener("toggle", function(){
+        if (details.open) delete collapsedCats[catKey]; else collapsedCats[catKey] = true;
+        saveCollapsedCats();
+        updateCollapseAllBtn();
+      });
+      var summary = document.createElement("summary");
+      summary.className = "cat-label";
+      summary.appendChild(el("span", "toggle"));
+      summary.appendChild(document.createTextNode(cat));
+      details.appendChild(summary);
+      section.appendChild(details);
+
+      var g = el("div", "grid");
+      slotsFor(room.id, cat).forEach(function(slot){
+        var key = itemKey(room.id, cat, slot.name);
+        var n = slot.options.length;
+        var lead = leadOf(key, slot);
+        var cardOpts = n > 1 ? {
+          href: "#options/" + encodeURIComponent(key),
+          pill: n + " options",
+          view: "Compare " + n + " options →"
+        } : {};
+        // Multi-option slots are edited one option at a time from the
+        // compare page instead — only a single-option slot removes here.
+        if (n === 1){
+          cardOpts.removeLabel = lead.name;
+          cardOpts.remove = (function(roomId, c, it){
+            return function(){
+              if (it.custom) removeCustomItem(roomId, c, it.id);
+              else markRemoved(itemKey(roomId, c, it.name), {room:room.label, cat:c, name:it.name});
+              render(); route(); updateCollapseAllBtn();
+            };
+          })(room.id, cat, lead);
+        }
+        g.appendChild(buildCard(lead, key, cardOpts));
+      });
+      var done = sourcedNames(room.id, cat);
+      (pendingCats[cat] || []).forEach(function(it){
+        var pKey = itemKey(room.id, cat, it.name);
+        if (done.indexOf(it.name.trim().toLowerCase()) === -1 && !isRemoved(pKey)){
+          g.appendChild(buildPlaceholder(it.name, it.note, it.est, pKey, (function(roomId, c, name){
+            return function(){
+              markRemoved(itemKey(roomId, c, name), {room:room.label, cat:c, name:name});
+              render(); route(); updateCollapseAllBtn();
+            };
+          })(room.id, cat, it.name)));
+        }
+      });
+      details.appendChild(g);
+    });
+
+    return section;
+  }
+
+  function computeTotals(){
+    var confirmed = 0, estimate = 0, sourced = 0, all = 0;
+    ROOMS.forEach(function(r){
+      var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
+      sourced += roomItemCount(r.id);
+      all += roomItemCount(r.id) + roomPendingCount(pd);
+
+      var cats = Object.keys(ITEMS[r.id] || {});
+      Object.keys(customItems[r.id] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+      cats.forEach(function(c){
+        slotsFor(r.id, c).forEach(function(slot){
+          confirmed += leadOf(itemKey(r.id, c, slot.name), slot).price || 0;
+        });
+      });
+
+      if (pd){
+        Object.keys(pd.categories).forEach(function(cat){
+          var done = sourcedNames(r.id, cat);
+          pd.categories[cat].forEach(function(it){
+            if (done.indexOf(it.name.trim().toLowerCase()) === -1 && !isRemoved(itemKey(r.id, cat, it.name))){
+              estimate += (it.est || 0);
+            }
+          });
+        });
+      }
+    });
+    return { confirmed:confirmed, estimate:estimate, sourced:sourced, all:all };
+  }
+
+  function setActive(roomId){
+    ROOMS.forEach(function(r){
+      var tab = document.getElementById("tab-" + r.id);
+      var panel = document.getElementById("panel-" + r.id);
+      var active = r.id === roomId;
+      if (tab) tab.setAttribute("aria-selected", active ? "true" : "false");
+      if (panel) panel.classList.toggle("active", active);
+    });
+    try { localStorage.setItem("new-home-schedule:tab", roomId); } catch(e){}
+  }
+
+  function render(){
+    var tabRow = document.getElementById("tab-row");
+    var roomsWrap = document.getElementById("rooms");
+    tabRow.innerHTML = "";
+    roomsWrap.innerHTML = "";
+
+    ROOMS.forEach(function(r){
+      var pd = PENDING_ROOMS.filter(function(p){ return p.id === r.id; })[0];
+      var sourcedCount = roomItemCount(r.id);
+      var totalCount = sourcedCount + roomPendingCount(pd);
+
+      var btn = el("button", "tab");
+      btn.id = "tab-" + r.id;
+      btn.type = "button";
+      btn.setAttribute("role", "tab");
+      btn.innerHTML =
+        '<span class="code">' + r.code + '</span>' +
+        '<span>' + r.label + '</span>' +
+        '<span class="count">(' + sourcedCount + '/' + totalCount + ')</span>';
+      btn.addEventListener("click", function(){
+        location.hash = r.id;
+        route();
+      });
+      tabRow.appendChild(btn);
+
+      roomsWrap.appendChild(buildRoom(r, pd));
+    });
+
+    var totals = computeTotals();
+    document.getElementById("item-count").textContent =
+      totals.sourced + " of " + totals.all + " sourced";
+    document.getElementById("running-total").innerHTML =
+      fmt.format(totals.confirmed) +
+      ' <span class="est" id="estimate-line">+ ~' + fmt.format(totals.estimate) + ' est.</span>';
+    updateBoughtStats();
+  }
+
+  // Options page for one slot, reached at #options/<room|category|slot>.
+  function renderOptions(key){
+    var parts = key.split("|");
+    var room = ROOMS.filter(function(r){ return r.id === parts[0]; })[0];
+    var slot = room && slotsFor(room.id, parts[1]).filter(function(sl){
+      return itemKey(room.id, parts[1], sl.name) === key;
+    })[0];
+    if (!slot) return null;
+
+    var wrap = document.getElementById("options");
+    wrap.innerHTML = "";
+    var back = el("a", "opt-back", "← Back to " + room.label);
+    back.href = "#" + room.id;
+    wrap.appendChild(back);
+
+    var head = el("div", "room-head");
+    head.appendChild(el("h2", null, slot.name));
+    head.appendChild(el("span", "room-stat", slot.options.length + " options · " + room.label + " › " + parts[1]));
+    wrap.appendChild(head);
+
+    var lead = leadOf(key, slot);
+    var g = el("div", "grid");
+    slot.options.forEach(function(item, i){
+      var isLead = item === lead;
+      var card = buildCard(item, null, {
+        tag: "Option " + String.fromCharCode(65 + i),
+        removeLabel: item.name,
+        remove: function(){
+          if (item.custom) removeCustomItem(room.id, parts[1], item.id);
+          else markRemoved(itemKey(room.id, parts[1], item.name), {room:room.label, cat:parts[1], name:item.name});
+          render();
+          location.hash = room.id;
+          route();
+          updateCollapseAllBtn();
+        }
+      });
+      if (isLead) card.classList.add("lead");
+
+      var pick = el("label", "lead-pick");
+      var box = document.createElement("input");
+      box.type = "checkbox";
+      box.checked = isLead;
+      box.disabled = isLead;
+      box.addEventListener("change", function(){
+        setLead(key, item.name);
+        render();
+        renderOptions(key);
+      });
+      pick.appendChild(box);
+      pick.appendChild(el("span", null, isLead ? "Leading option" : "Make leading option"));
+      card.querySelector(".body").appendChild(pick);
+      g.appendChild(card);
+    });
+    wrap.appendChild(g);
+    return room.id;
+  }
+
+  function route(){
+    var hash = (location.hash || "").replace("#", "");
+    var view = document.getElementById("view-items");
+    if (hash.indexOf("options/") === 0){
+      var roomId = renderOptions(decodeURIComponent(hash.slice(8)));
+      if (roomId){
+        setPage("items");
+        view.classList.add("show-options");
+        setActive(roomId);
+        window.scrollTo(0, 0);
+        return;
+      }
+    }
+    view.classList.remove("show-options");
+    var initial = "kitchen";
+    var stored = null;
+    try { stored = localStorage.getItem("new-home-schedule:tab"); } catch(e){}
+    if (ROOMS.some(function(r){ return r.id === hash; })) initial = hash;
+    else if (ROOMS.some(function(r){ return r.id === stored; })) initial = stored;
+    setActive(initial);
+  }
+
+  window.addEventListener("hashchange", route);
+
+  // Flat, in-display-order list of pins across all sections — rebuilt by
+  // renderMoodboard() — so the lightbox can step left/right through
+  // everything in the order currently shown, not just one section.
+  var moodFlatList = [];
+  var lightboxIndex = -1;
+
+  function openLightbox(pin){
+    var lb = document.getElementById("lightbox");
+    document.getElementById("lightbox-img").src = pin.img;
+    document.getElementById("lightbox-img").alt = pin.caption || "";
+    document.getElementById("lightbox-cap").textContent =
+      [pin.caption, pin.room].filter(Boolean).join(" · ");
+    lb.classList.add("active");
+  }
+
+  function openLightboxAt(idx){
+    if (!moodFlatList.length) return;
+    idx = ((idx % moodFlatList.length) + moodFlatList.length) % moodFlatList.length;
+    lightboxIndex = idx;
+    openLightbox(moodFlatList[idx]);
+  }
+
+  function closeLightbox(){
+    document.getElementById("lightbox").classList.remove("active");
+    lightboxIndex = -1;
+  }
+
+  (function setupLightbox(){
+    var lb = document.getElementById("lightbox");
+    lb.addEventListener("click", closeLightbox);
+    lb.querySelector(".lb-close").addEventListener("click", function(e){
+      e.stopPropagation();
+      closeLightbox();
+    });
+    document.addEventListener("keydown", function(e){
+      if (e.key === "Escape"){ closeLightbox(); return; }
+      if (!lb.classList.contains("active")) return;
+      if (e.key === "ArrowLeft"){ e.preventDefault(); openLightboxAt(lightboxIndex - 1); }
+      if (e.key === "ArrowRight"){ e.preventDefault(); openLightboxAt(lightboxIndex + 1); }
+    });
+  })();
+
+  // Per-section custom order the viewer has dragged into place, kept in
+  // this browser's localStorage: {sectionName: [imgPath, ...]}.
+  var MOOD_ORDER_KEY = "new-home-schedule:moodboard-order";
+  var moodOrder = {};
+  try { moodOrder = JSON.parse(localStorage.getItem(MOOD_ORDER_KEY)) || {}; } catch(e){}
+  // The first batch of listing photos moved from "Real Estate Photos" to
+  // "Real Estate Originals"; carry any order saved under the old name.
+  var oldRE = moodOrder["Real Estate Photos"];
+  if (oldRE && !moodOrder["Real Estate Originals"] &&
+      oldRE.some(function(id){ return id.indexOf("moodboard/empty-") !== 0; })){
+    moodOrder["Real Estate Originals"] = oldRE;
+    delete moodOrder["Real Estate Photos"];
+    try { localStorage.setItem(MOOD_ORDER_KEY, JSON.stringify(moodOrder)); } catch(e){}
+  }
+
+  function saveMoodOrder(){
+    try { localStorage.setItem(MOOD_ORDER_KEY, JSON.stringify(moodOrder)); } catch(e){}
+  }
+
+  function orderedPinsFor(section, pins){
+    var saved = moodOrder[section];
+    if (!saved || !saved.length) return pins.slice();
+    var byId = {};
+    pins.forEach(function(p){ byId[p.img] = p; });
+    var ordered = [];
+    saved.forEach(function(id){
+      if (byId[id]){ ordered.push(byId[id]); delete byId[id]; }
+    });
+    // anything not in the saved order (newly added pins) keeps its
+    // original relative position, appended at the end
+    pins.forEach(function(p){ if (byId[p.img]) ordered.push(p); });
+    return ordered;
+  }
+
+  // Reorder-by-drag for one section's grid: on drop, read the grid's
+  // current DOM order (already live-reordered during dragover) back
+  // into moodOrder, then re-render from data so everything — including
+  // moodFlatList and lightbox indices — stays consistent.
+  function attachGridDnD(grid, section){
+    grid.addEventListener("dragover", function(e){
+      var dragging = grid.querySelector(".dragging");
+      if (!dragging) return;
+      e.preventDefault();
+      var figs = Array.prototype.slice.call(grid.querySelectorAll("figure:not(.dragging)"));
+      var closest = null, closestDist = Infinity;
+      figs.forEach(function(f){
+        var box = f.getBoundingClientRect();
+        var cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+        var d = Math.pow(e.clientX - cx, 2) + Math.pow(e.clientY - cy, 2);
+        if (d < closestDist){ closestDist = d; closest = { el: f, box: box }; }
+      });
+      if (!closest){ grid.appendChild(dragging); return; }
+      var before = e.clientX < (closest.box.left + closest.box.width / 2);
+      grid.insertBefore(dragging, before ? closest.el : closest.el.nextSibling);
+    });
+    grid.addEventListener("drop", function(e){
+      e.preventDefault();
+      moodOrder[section] = Array.prototype.map.call(
+        grid.querySelectorAll("figure"), function(f){ return f.dataset.imgId; }
+      );
+      saveMoodOrder();
+      renderMoodboard();
+    });
+  }
+
+  function buildMoodCard(pin, flatIndex){
+    var fig = el("figure", pin.tall ? "tall" : null);
+    fig.draggable = true;
+    fig.dataset.imgId = pin.img;
+    fig.addEventListener("dragstart", function(e){
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", pin.img);
+      fig.classList.add("dragging");
+    });
+    fig.addEventListener("dragend", function(){ fig.classList.remove("dragging"); });
+
+    var img = document.createElement("img");
+    img.src = pin.img;
+    img.alt = pin.caption || "";
+    img.loading = "lazy";
+    img.draggable = false;
+    img.tabIndex = 0;
+    img.setAttribute("role", "button");
+    img.setAttribute("aria-label", "View " + (pin.caption || "photo") + " full screen");
+    img.addEventListener("click", function(){ openLightboxAt(flatIndex); });
+    img.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openLightboxAt(flatIndex); }
+    });
+    fig.appendChild(img);
+    if (pin.caption || pin.room){
+      var cap = el("figcaption");
+      if (pin.caption) cap.appendChild(el("b", null, pin.caption));
+      if (pin.room) cap.appendChild(document.createTextNode(pin.room));
+      if (pin.source){
+        cap.appendChild(document.createElement("br"));
+        var a = document.createElement("a");
+        a.href = pin.source; a.target = "_blank"; a.rel = "noopener";
+        a.textContent = "Source →";
+        cap.appendChild(a);
+      }
+      fig.appendChild(cap);
+    }
+    return fig;
+  }
+
+  // Moodboard sections are collapsible; the viewer's open/closed choice
+  // per section is kept in this browser, otherwise sections listed in
+  // MOOD_COLLAPSED_BY_DEFAULT start closed.
+  var MOOD_COLLAPSED_BY_DEFAULT = ["Real Estate Originals"];
+  var MOOD_OPEN_KEY = "new-home-schedule:moodboard-open";
+  var moodOpen = {};
+  try { moodOpen = JSON.parse(localStorage.getItem(MOOD_OPEN_KEY)) || {}; } catch(e){}
+
+  function moodSectionOpen(name){
+    if (typeof moodOpen[name] === "boolean") return moodOpen[name];
+    return MOOD_COLLAPSED_BY_DEFAULT.indexOf(name) === -1;
+  }
+
+  function renderMoodboard(){
+    var wrap = document.getElementById("mood-sections");
+    var empty = document.getElementById("mood-empty");
+    wrap.innerHTML = "";
+    moodFlatList = [];
+
+    var sectionNames = [], bySection = {};
+    MOODBOARD.forEach(function(pin){
+      var name = pin.section || "Pins";
+      if (!bySection[name]){ bySection[name] = []; sectionNames.push(name); }
+      bySection[name].push(pin);
+    });
+
+    sectionNames.forEach(function(name){
+      var details = document.createElement("details");
+      details.className = "cat-group";
+      details.open = moodSectionOpen(name);
+      details.addEventListener("toggle", function(){
+        moodOpen[name] = details.open;
+        try { localStorage.setItem(MOOD_OPEN_KEY, JSON.stringify(moodOpen)); } catch(e){}
+      });
+      var summary = document.createElement("summary");
+      summary.className = "cat-label";
+      summary.appendChild(el("span", "toggle"));
+      summary.appendChild(document.createTextNode(name));
+      details.appendChild(summary);
+      wrap.appendChild(details);
+
+      var grid = el("div", "mood-grid");
+      orderedPinsFor(name, bySection[name]).forEach(function(pin){
+        var idx = moodFlatList.length;
+        moodFlatList.push(pin);
+        grid.appendChild(buildMoodCard(pin, idx));
+      });
+      attachGridDnD(grid, name);
+      details.appendChild(grid);
+    });
+
+    wrap.style.display = MOODBOARD.length ? "" : "none";
+    empty.style.display = MOODBOARD.length ? "none" : "";
+    document.getElementById("mood-stat").textContent =
+      MOODBOARD.length + " pin" + (MOODBOARD.length === 1 ? "" : "s");
+  }
+
+  function setPage(page){
+    var itemsBtn = document.getElementById("page-items");
+    var moodBtn = document.getElementById("page-moodboard");
+    var itemsView = document.getElementById("view-items");
+    var moodView = document.getElementById("view-moodboard");
+    var onMood = page === "moodboard";
+    itemsBtn.setAttribute("aria-selected", onMood ? "false" : "true");
+    moodBtn.setAttribute("aria-selected", onMood ? "true" : "false");
+    itemsView.classList.toggle("active", !onMood);
+    moodView.classList.toggle("active", onMood);
+    try { localStorage.setItem("new-home-schedule:page", page); } catch(e){}
+  }
+
+  document.getElementById("page-items").addEventListener("click", function(){ setPage("items"); });
+  document.getElementById("page-moodboard").addEventListener("click", function(){ setPage("moodboard"); });
+
+  renderMoodboard();
+  var storedPage = "items";
+  try { storedPage = localStorage.getItem("new-home-schedule:page") || "items"; } catch(e){}
+  setPage(storedPage);
+
+  function setView(view){
+    var roomsWrap = document.getElementById("rooms");
+    var gridBtn = document.getElementById("view-grid");
+    var listBtn = document.getElementById("view-list");
+    roomsWrap.classList.toggle("list-view", view === "list");
+    gridBtn.setAttribute("aria-pressed", view === "grid" ? "true" : "false");
+    listBtn.setAttribute("aria-pressed", view === "list" ? "true" : "false");
+    try { localStorage.setItem("new-home-schedule:view", view); } catch(e){}
+  }
+
+  document.getElementById("view-grid").addEventListener("click", function(){ setView("grid"); });
+  document.getElementById("view-list").addEventListener("click", function(){ setView("list"); });
+
+  var storedView = "grid";
+  try { storedView = localStorage.getItem("new-home-schedule:view") || "grid"; } catch(e){}
+  setView(storedView);
+
+  // ---- Add item ----
+  function categoriesForRoom(roomId){
+    var pd = PENDING_ROOMS.filter(function(p){ return p.id === roomId; })[0];
+    var cats = pd ? Object.keys(pd.categories).slice() : [];
+    Object.keys(ITEMS[roomId] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+    Object.keys(customItems[roomId] || {}).forEach(function(c){ if (cats.indexOf(c) === -1) cats.push(c); });
+    return cats;
+  }
+  function populateAddCatSelect(roomId, keepValue){
+    var sel = document.getElementById("add-cat");
+    sel.innerHTML = "";
+    categoriesForRoom(roomId).forEach(function(c){
+      var opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+    var newOpt = document.createElement("option");
+    newOpt.value = "__new__"; newOpt.textContent = "+ New category…";
+    sel.appendChild(newOpt);
+    if (keepValue && sel.querySelector('option[value="' + CSS.escape(keepValue) + '"]')) sel.value = keepValue;
+    document.getElementById("add-cat-new-wrap").style.display = sel.value === "__new__" ? "" : "none";
+  }
+
+  var addDialog = document.getElementById("add-item");
+  document.getElementById("add-item-btn").addEventListener("click", function(){
+    var roomSel = document.getElementById("add-room");
+    roomSel.innerHTML = "";
+    ROOMS.forEach(function(r){
+      var opt = document.createElement("option");
+      opt.value = r.id; opt.textContent = r.label;
+      roomSel.appendChild(opt);
+    });
+    var activeRoom = ROOMS.filter(function(r){
+      var panel = document.getElementById("panel-" + r.id);
+      return panel && panel.classList.contains("active");
+    })[0] || ROOMS[0];
+    roomSel.value = activeRoom.id;
+    document.getElementById("add-item-form").reset();
+    roomSel.value = activeRoom.id;
+    populateAddCatSelect(activeRoom.id);
+    if (addDialog.showModal) addDialog.showModal(); else addDialog.setAttribute("open", "");
+    document.getElementById("add-name").focus();
+  });
+  document.getElementById("add-item-close").addEventListener("click", function(){ addDialog.close(); });
+  addDialog.addEventListener("click", function(e){ if (e.target === addDialog) addDialog.close(); });
+  document.getElementById("add-room").addEventListener("change", function(e){ populateAddCatSelect(e.target.value); });
+  document.getElementById("add-cat").addEventListener("change", function(e){
+    document.getElementById("add-cat-new-wrap").style.display = e.target.value === "__new__" ? "" : "none";
+  });
+
+  document.getElementById("add-item-form").addEventListener("submit", function(e){
+    e.preventDefault();
+    var roomId = document.getElementById("add-room").value;
+    var catSel = document.getElementById("add-cat").value;
+    var cat = catSel === "__new__" ? document.getElementById("add-cat-new").value.trim() : catSel;
+    var name = document.getElementById("add-name").value.trim();
+    if (!roomId || !cat || !name) return;
+    var priceRaw = document.getElementById("add-price").value;
+    var item = {
+      id: "custom-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      code: "ADD",
+      name: name,
+      brand: document.getElementById("add-brand").value.trim() || null,
+      material: document.getElementById("add-material").value.trim() || null,
+      dims: document.getElementById("add-dims").value.trim() || null,
+      price: priceRaw ? Number(priceRaw) : null,
+      currency: "AUD",
+      url: document.getElementById("add-url").value.trim() || null,
+      img: document.getElementById("add-img").value.trim() || PLACEHOLDER_IMG,
+      note: document.getElementById("add-note").value.trim() || null,
+      custom: true
+    };
+    addCustomItem(roomId, cat, item);
+    addDialog.close();
+    render();
+    location.hash = roomId;
+    route();
+    updateCollapseAllBtn();
+  });
+
+  renderRemovedList();
+  render();
+  route();
+  updateCollapseAllBtn();
+  syncStart();
+
+  // ================= Draft tooling =================
+  // Settings panel, Claude notes panel, and the view-as-mobile toggle.
+  // None of this is part of the public schedule — see --public build
+  // notes in NOTES.md if this ever needs stripping out for launch.
+  (function(){
+
+    var FONTS = [
+      {id:"brand-lora",   label:"Lora (brand default)",   family:"'Lora', Georgia, 'Times New Roman', serif", google:null},
+      {id:"brand-inter",  label:"Inter (brand default)",  family:"'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", google:null},
+      {id:"system",       label:"System default",         family:"-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", google:null},
+      {id:"century-gothic", label:"Century Gothic",       family:"'Century Gothic', Futura, sans-serif", google:null},
+      {id:"nunito",       label:"Nunito",                 family:"'Nunito', sans-serif", google:"Nunito:wght@400;500;600;700"},
+      {id:"quicksand",    label:"Quicksand",               family:"'Quicksand', sans-serif", google:"Quicksand:wght@400;500;600;700"},
+      {id:"varela-round", label:"Varela Round",            family:"'Varela Round', sans-serif", google:"Varela+Round"},
+      {id:"fredoka",      label:"Fredoka",                 family:"'Fredoka', sans-serif", google:"Fredoka:wght@400;500;600;700"},
+      {id:"figtree",      label:"Figtree",                 family:"'Figtree', sans-serif", google:"Figtree:wght@400;500;600;700"},
+      {id:"dm-sans",      label:"DM Sans",                 family:"'DM Sans', sans-serif", google:"DM+Sans:wght@400;500;600;700"},
+      {id:"outfit",       label:"Outfit",                  family:"'Outfit', sans-serif", google:"Outfit:wght@400;500;600;700"},
+      {id:"manrope",      label:"Manrope",                 family:"'Manrope', sans-serif", google:"Manrope:wght@400;500;600;700"},
+      {id:"poppins",      label:"Poppins",                 family:"'Poppins', sans-serif", google:"Poppins:wght@400;500;600;700"},
+      {id:"fraunces",     label:"Fraunces",                family:"'Fraunces', serif", google:"Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400"}
+    ];
+
+    var DEVICES = [
+      {id:"iphone16",    label:"iPhone 16 (393×852)",     w:393, h:852},
+      {id:"iphone-se",   label:"iPhone SE (375×667)",     w:375, h:667},
+      {id:"galaxy-s24",  label:"Galaxy S24 (360×780)",    w:360, h:780},
+      {id:"pixel9",      label:"Pixel 9 (412×915)",       w:412, h:915}
+    ];
+
+    var BASE_DEFAULTS = {
+      fDisplay:"brand-lora", fHead:"brand-lora", fBody:"brand-inter", fUi:"brand-inter",
+      wDisplay:700, wHead:600,
+      kAll:1, kBody:1, kHead:1, kDisplay:1, kSpace:1, lh:1.5, wrapW:1180,
+      mode:"light", accent:"ketchup", labels:"upper", anim:"full",
+      device:"iphone16", mobilePreview:false, highlightPlaceholders:false, hiresReminder:false
+    };
+
+    var PRESETS = {
+      brand:      Object.assign({}, BASE_DEFAULTS),
+      soft:       Object.assign({}, BASE_DEFAULTS, {fDisplay:"fredoka", fHead:"quicksand", fBody:"nunito", fUi:"nunito", wDisplay:600, wHead:600, kBody:1.05, kDisplay:0.95, kSpace:1.1, lh:1.6, accent:"avocado", labels:"sentence"}),
+      serif:      Object.assign({}, BASE_DEFAULTS, {fDisplay:"fraunces", fHead:"fraunces", kHead:1.05, kDisplay:1.1, lh:1.55}),
+      mono:       Object.assign({}, BASE_DEFAULTS, {fDisplay:"outfit", fHead:"outfit", fBody:"dm-sans", fUi:"dm-sans", wHead:500, kAll:0.95, kHead:0.95, kDisplay:0.9, kSpace:0.85, lh:1.45, accent:"ink"}),
+      warm:       Object.assign({}, BASE_DEFAULTS, {fBody:"figtree", fUi:"figtree", wHead:700, kAll:1.05, kHead:1.05, kDisplay:1.1, kSpace:1.1, accent:"avocado"}),
+      accessible: Object.assign({}, BASE_DEFAULTS, {fHead:"manrope", fBody:"manrope", fUi:"manrope", wHead:700, kAll:1.2, kBody:1.15, kHead:1.1, kDisplay:1.1, kSpace:1.2, lh:1.7, labels:"sentence", anim:"reduced"})
+    };
+
+    var SETTINGS_KEY = "new-home-schedule:settings";
+    var NOTES_KEY = "new-home-schedule:notes";
+    var loadedFonts = {};
+    var state = loadState();
+
+    function loadState(){
+      var saved = null;
+      try { saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null"); } catch(e){}
+      return Object.assign({}, BASE_DEFAULTS, saved || {});
+    }
+    function saveState(){
+      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state)); } catch(e){}
+    }
+
+    function fontById(id){
+      var hit = FONTS.filter(function(f){ return f.id === id; })[0];
+      return hit || FONTS[0];
+    }
+    function ensureGoogleFont(id){
+      var f = fontById(id);
+      if (!f.google || loadedFonts[f.google]) return;
+      loadedFonts[f.google] = true;
+      var link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=" + f.google + "&display=swap";
+      document.head.appendChild(link);
+    }
+
+    function deviceById(id){
+      var hit = DEVICES.filter(function(d){ return d.id === id; })[0];
+      return hit || DEVICES[0];
+    }
+
+    function applySettings(){
+      ensureGoogleFont(state.fDisplay); ensureGoogleFont(state.fHead);
+      ensureGoogleFont(state.fBody); ensureGoogleFont(state.fUi);
+      var root = document.documentElement;
+      root.style.setProperty("--f-display", fontById(state.fDisplay).family);
+      root.style.setProperty("--f-head", fontById(state.fHead).family);
+      root.style.setProperty("--f-body", fontById(state.fBody).family);
+      root.style.setProperty("--f-ui", fontById(state.fUi).family);
+      root.style.setProperty("--w-display", state.wDisplay);
+      root.style.setProperty("--w-head", state.wHead);
+      root.style.setProperty("--k-all", state.kAll);
+      root.style.setProperty("--k-body", state.kBody);
+      root.style.setProperty("--k-head", state.kHead);
+      root.style.setProperty("--k-display", state.kDisplay);
+      root.style.setProperty("--k-space", state.kSpace);
+      root.style.setProperty("--lh", state.lh);
+      root.style.setProperty("--wrap-w", state.wrapW + "px");
+
+      var effectiveMode = state.mode;
+      if (effectiveMode === "system"){
+        effectiveMode = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+      }
+      root.setAttribute("data-mode", effectiveMode);
+      root.setAttribute("data-accent", state.accent);
+      root.setAttribute("data-labels", state.labels);
+      root.setAttribute("data-anim", state.anim);
+      root.setAttribute("data-highlight-placeholders", state.highlightPlaceholders ? "1" : "0");
+      root.setAttribute("data-hires-reminder", state.hiresReminder ? "1" : "0");
+
+      var d = deviceById(state.device);
+      root.style.setProperty("--device-w", d.w + "px");
+      root.style.setProperty("--device-h", d.h + "px");
+    }
+
+    function syncForm(){
+      setVal("set-f-display", state.fDisplay); setVal("set-f-head", state.fHead);
+      setVal("set-f-body", state.fBody); setVal("set-f-ui", state.fUi);
+      setVal("set-w-display", String(state.wDisplay)); setVal("set-w-head", String(state.wHead));
+      setVal("set-k-all", state.kAll); setVal("set-k-body", state.kBody);
+      setVal("set-k-head", state.kHead); setVal("set-k-display", state.kDisplay);
+      setVal("set-lh", state.lh); setVal("set-k-space", state.kSpace);
+      setVal("set-wrap-w", String(state.wrapW));
+      setVal("set-mode", state.mode); setVal("set-accent", state.accent);
+      setVal("set-labels", state.labels); setVal("set-anim", state.anim);
+      setVal("set-device", state.device);
+      setChecked("tog-placeholders", state.highlightPlaceholders);
+      setChecked("tog-hires", state.hiresReminder);
+    }
+    function setVal(id, v){ var el = document.getElementById(id); if (el) el.value = v; }
+    function setChecked(id, v){ var el = document.getElementById(id); if (el) el.checked = !!v; }
+    function setText(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; }
+
+    function populateSelect(id, defaultId){
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      FONTS.forEach(function(f){
+        var opt = document.createElement("option");
+        opt.value = f.id; opt.textContent = f.label;
+        sel.appendChild(opt);
+      });
+      sel.value = defaultId;
+    }
+    function populateDevices(id){
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      DEVICES.forEach(function(d){
+        var opt = document.createElement("option");
+        opt.value = d.id; opt.textContent = d.label;
+        sel.appendChild(opt);
+      });
+    }
+
+    populateSelect("set-f-display", state.fDisplay);
+    populateSelect("set-f-head", state.fHead);
+    populateSelect("set-f-body", state.fBody);
+    populateSelect("set-f-ui", state.fUi);
+    populateDevices("set-device");
+    syncForm();
+    applySettings();
+
+    if (window.matchMedia){
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){
+        if (state.mode === "system") applySettings();
+      });
+    }
+
+    function bindSelect(id, key, isNumber){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", function(){
+        state[key] = isNumber ? Number(el.value) : el.value;
+        saveState(); applySettings();
+      });
+    }
+    function bindRange(id, key){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", function(){
+        state[key] = Number(el.value);
+        saveState(); applySettings();
+      });
+    }
+    function bindCheck(id, key){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("change", function(){
+        state[key] = el.checked;
+        saveState(); applySettings();
+      });
+    }
+
+    bindSelect("set-f-display","fDisplay"); bindSelect("set-f-head","fHead");
+    bindSelect("set-f-body","fBody"); bindSelect("set-f-ui","fUi");
+    bindSelect("set-w-display","wDisplay",true); bindSelect("set-w-head","wHead",true);
+    bindRange("set-k-all","kAll"); bindRange("set-k-body","kBody");
+    bindRange("set-k-head","kHead"); bindRange("set-k-display","kDisplay");
+    bindRange("set-lh","lh"); bindRange("set-k-space","kSpace");
+    bindSelect("set-wrap-w","wrapW",true);
+    bindSelect("set-mode","mode"); bindSelect("set-accent","accent");
+    bindSelect("set-labels","labels"); bindSelect("set-anim","anim");
+    bindCheck("tog-placeholders","highlightPlaceholders");
+    bindCheck("tog-hires","hiresReminder");
+
+    document.getElementById("set-device").addEventListener("change", function(e){
+      state.device = e.target.value;
+      saveState(); applySettings();
+    });
+
+    function applyPreset(name){
+      var p = PRESETS[name];
+      if (!p) return;
+      state = Object.assign({}, p, {
+        device: state.device,
+        mobilePreview: state.mobilePreview,
+        highlightPlaceholders: state.highlightPlaceholders,
+        hiresReminder: state.hiresReminder
+      });
+      saveState(); syncForm(); applySettings();
+    }
+    document.getElementById("set-preset").addEventListener("change", function(e){
+      if (e.target.value) applyPreset(e.target.value);
+    });
+    document.getElementById("set-reset").addEventListener("click", function(){
+      applyPreset("brand");
+      document.getElementById("set-preset").value = "";
+    });
+
+    function settingsSummary(){
+      var lines = [
+        "New Home schedule — settings snapshot",
+        "Typography: display=" + fontById(state.fDisplay).label + ", heading=" + fontById(state.fHead).label +
+          ", body=" + fontById(state.fBody).label + ", labels/nav/buttons=" + fontById(state.fUi).label,
+        "Weights: display=" + state.wDisplay + ", heading=" + state.wHead,
+        "Scale: overall=" + state.kAll + ", body=" + state.kBody + ", heading=" + state.kHead +
+          ", display=" + state.kDisplay + ", section spacing=" + state.kSpace + ", line height=" + state.lh,
+        "Content width: " + state.wrapW + "px",
+        "Appearance: " + state.mode + " · accent=" + state.accent + " · labels=" + state.labels + " · animation=" + state.anim
+      ];
+      return lines.join("\n");
+    }
+    document.getElementById("set-copy").addEventListener("click", function(){
+      var text = settingsSummary();
+      document.getElementById("set-copy-box").value = text;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).catch(function(){});
+      }
+    });
+
+    // ---- Notes (Claude panel) — draft kept locally, "Save" pushes to GitHub ----
+    var notesBox = document.getElementById("claude-notes");
+    try { notesBox.value = localStorage.getItem(NOTES_KEY) || ""; } catch(e){}
+    var notesTimer = null;
+    notesBox.addEventListener("input", function(){
+      try { localStorage.setItem(NOTES_KEY, notesBox.value); } catch(e){}
+    });
+
+    var GH_OWNER = "Schippeaux";
+    var GH_REPO = "new-home-schedule";
+    var GH_BRANCH = "claude/nice-hypatia-wzi05g";
+    var GH_NOTES_PATH = "NOTES_INBOX.md";
+    // Shared across every page on schippeaux.github.io (same origin), so a
+    // token entered on any of them works on all of them.
+    var GH_TOKEN_KEY = "github-token";
+    var GH_TOKEN_LEGACY_KEY = "new-home-schedule:gh-token";
+
+    function getGhToken(){
+      try {
+        var t = localStorage.getItem(GH_TOKEN_KEY);
+        if (t) return t;
+        // One-time migration from the per-page key used before this change.
+        var legacy = localStorage.getItem(GH_TOKEN_LEGACY_KEY);
+        if (legacy){
+          localStorage.setItem(GH_TOKEN_KEY, legacy);
+          return legacy;
+        }
+        return "";
+      } catch(e){ return ""; }
+    }
+    function setGhToken(t){
+      try { localStorage.setItem(GH_TOKEN_KEY, t); } catch(e){}
+    }
+    function b64EncodeUnicode(str){
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    var ghTokenInput = document.getElementById("gh-token-input");
+    try { ghTokenInput.value = getGhToken(); } catch(e){}
+    var ghTokenTimer = null;
+    ghTokenInput.addEventListener("input", function(){
+      setGhToken(ghTokenInput.value.trim());
+      setText("gh-token-status", "Saved");
+      clearTimeout(ghTokenTimer);
+      ghTokenTimer = setTimeout(function(){ setText("gh-token-status", ""); }, 1500);
+    });
+
+    function saveNotesToGitHub(){
+      var token = getGhToken();
+      if (!token){
+        setText("claude-notes-status", "Add a GitHub token below first.");
+        return;
+      }
+      var text = notesBox.value;
+      setText("claude-notes-status", "Saving…");
+      var apiUrl = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + GH_NOTES_PATH;
+      var headers = { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" };
+      fetch(apiUrl + "?ref=" + GH_BRANCH, { headers: headers })
+        .then(function(r){ return r.status === 200 ? r.json() : null; })
+        .then(function(existing){
+          var stamp = new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+          var body = "# Notes for Claude\n\n_Last saved from the live page: " + stamp + "_\n\n" + text + "\n";
+          var payload = {
+            message: "Notes from draft review — " + stamp,
+            content: b64EncodeUnicode(body),
+            branch: GH_BRANCH
+          };
+          if (existing && existing.sha) payload.sha = existing.sha;
+          return fetch(apiUrl, {
+            method: "PUT",
+            headers: Object.assign({ "Content-Type": "application/json" }, headers),
+            body: JSON.stringify(payload)
+          });
+        })
+        .then(function(r){
+          if (!r.ok) return r.json().then(function(err){ throw new Error(err.message || ("HTTP " + r.status)); });
+          setText("claude-notes-status", "Saved to GitHub ✓");
+          setTimeout(function(){ setText("claude-notes-status", ""); }, 2500);
+        })
+        .catch(function(err){
+          setText("claude-notes-status", "Couldn't save: " + err.message);
+        });
+    }
+    document.getElementById("claude-notes-save").addEventListener("click", saveNotesToGitHub);
+
+    // ---- Build version + history (from builds.json, shipped alongside this file) ----
+    fetch("builds.json").then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if (!data || !data.builds || !data.builds.length) return;
+        var current = data.builds[data.builds.length - 1];
+        var label = "Draft build v" + current.version + " · " + current.date;
+        setText("build-badge-foot", label);
+        setText("build-note", label + ". Earlier builds are archived in the Build History folder of this repo.");
+        setText("build-note-claude", label);
+        var list = document.getElementById("build-list");
+        var prev = data.builds.slice(0, -1).reverse();
+        if (!prev.length){ return; }
+        list.innerHTML = "";
+        prev.forEach(function(b){
+          var li = document.createElement("li");
+          var a = document.createElement("a");
+          a.href = "Build History/index_v" + b.version + "_" + b.date + ".html";
+          a.textContent = "v" + b.version;
+          var span = document.createElement("span");
+          span.textContent = b.date;
+          li.appendChild(a); li.appendChild(span);
+          list.appendChild(li);
+        });
+      }).catch(function(){});
+
+    // ---- Panels (mutually exclusive, non-blocking) ----
+    var settingsPanel = document.getElementById("panel-settings");
+    var claudePanel = document.getElementById("panel-claude");
+    var settingsToggle = document.getElementById("settings-toggle");
+    var claudeToggle = document.getElementById("claude-toggle");
+
+    function closePanels(){
+      settingsPanel.classList.remove("open"); settingsPanel.setAttribute("aria-hidden","true");
+      claudePanel.classList.remove("open"); claudePanel.setAttribute("aria-hidden","true");
+      settingsToggle.setAttribute("aria-pressed","false");
+      claudeToggle.setAttribute("aria-pressed","false");
+    }
+    function openPanel(which){
+      var alreadyOpen = (which === "settings" && settingsPanel.classList.contains("open")) ||
+                         (which === "claude" && claudePanel.classList.contains("open"));
+      closePanels();
+      if (alreadyOpen) return;
+      if (which === "settings"){
+        settingsPanel.classList.add("open"); settingsPanel.setAttribute("aria-hidden","false");
+        settingsToggle.setAttribute("aria-pressed","true");
+      } else {
+        claudePanel.classList.add("open"); claudePanel.setAttribute("aria-hidden","false");
+        claudeToggle.setAttribute("aria-pressed","true");
+      }
+    }
+    settingsToggle.addEventListener("click", function(){ openPanel("settings"); });
+    claudeToggle.addEventListener("click", function(){ openPanel("claude"); });
+    document.getElementById("settings-close").addEventListener("click", closePanels);
+    document.getElementById("claude-close").addEventListener("click", closePanels);
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") closePanels(); });
+
+    // ---- View as mobile ----
+    var mobileToggle = document.getElementById("mobile-toggle");
+    var mobileIcon = document.getElementById("mobile-toggle-icon");
+    var PHONE_ICON = '<rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="11" y1="18" x2="13" y2="18"></line>';
+    var DESKTOP_ICON = '<rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>';
+    function setMobilePreview(on){
+      state.mobilePreview = on;
+      saveState();
+      document.documentElement.setAttribute("data-devicepreview", on ? "1" : "0");
+      mobileToggle.setAttribute("aria-pressed", on ? "true" : "false");
+      mobileIcon.innerHTML = on ? DESKTOP_ICON : PHONE_ICON;
+    }
+    mobileToggle.addEventListener("click", function(){ setMobilePreview(!state.mobilePreview); });
+    setMobilePreview(!!state.mobilePreview);
+
+  })();
+})();
+</script>

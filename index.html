@@ -1425,7 +1425,17 @@
   var SYNC_REPO = "new-home-schedule";
   var SYNC_BRANCH = "claude/nice-hypatia-wzi05g";
   var SYNC_PATH = "state.json";
-  var syncBase = null;        // flattened state as of the last sync
+  // The flattened state as of the last successful sync, persisted so a
+  // reload knows which local changes are genuinely new vs. already synced.
+  // Without this, a reload before a push finishes would re-pull the stale
+  // remote copy and overwrite not-yet-pushed local changes (ticks that
+  // "undo themselves" on refresh).
+  var SYNC_BASE_KEY = "new-home-schedule:sync-base";
+  var syncBase = null;
+  try { syncBase = JSON.parse(localStorage.getItem(SYNC_BASE_KEY)) || null; } catch(e){}
+  function persistSyncBase(){
+    try { localStorage.setItem(SYNC_BASE_KEY, JSON.stringify(syncBase || {})); } catch(e){}
+  }
   var syncSha = null;         // GitHub blob sha of state.json
   var syncReady = false;      // set once the startup pull has finished
   var syncDirty = false;      // local changes not yet pushed
@@ -1510,16 +1520,47 @@
       });
   }
 
-  // Pull the latest remote state (used on load). Skipped if this device
-  // has unpushed changes, so it never throws away a tick in progress.
+  // Pull the latest remote state (used on load). This is a merge, not an
+  // overwrite: anything changed in this browser since the last confirmed
+  // sync (diffed against the persisted syncBase) is kept on top of the
+  // remote copy, rather than being clobbered by it. That's what makes a
+  // tick made right before a refresh survive the refresh even if the push
+  // hadn't finished yet.
+  //
+  // Important: syncBase is only ever set to what's *confirmed* on GitHub —
+  // this fresh GET's content, or (elsewhere) a successful PUT's payload —
+  // never to the merge result itself. The merge can include local changes
+  // that aren't actually on GitHub yet; if syncBase absorbed those before
+  // they were pushed, a later push would diff local-vs-base, see no
+  // difference, and wrongly conclude there was nothing left to send.
   function pullRemote(){
-    if (syncDirty || syncInFlight || syncTimer) return Promise.resolve(false);
+    if (syncInFlight || syncTimer) return Promise.resolve(false);
     return fetchRemote().then(function(res){
+      var base = syncBase || {};
+      var localFlat = flatten(snapshotOf());
+      var remoteFlat = res.data ? flatten(res.data) : {};
+      var merged = {};
+      Object.keys(remoteFlat).forEach(function(p){ merged[p] = remoteFlat[p]; });
+      var paths = Object.keys(base).concat(Object.keys(localFlat));
+      var changedLocally = false;
+      paths.forEach(function(p){
+        if (localFlat[p] !== base[p]){
+          changedLocally = true;
+          if (p in localFlat) merged[p] = localFlat[p];
+          else delete merged[p];
+        }
+      });
       syncSha = res.sha;
-      applySnapshot(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
-      syncBase = flatten(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
-      syncDirty = false;
-      setSync("Synced ✓");
+      applySnapshot(unflatten(merged));
+      syncBase = remoteFlat;
+      persistSyncBase();
+      if (changedLocally){
+        syncDirty = true;
+        setSync("Unsynced changes…");
+      } else {
+        syncDirty = false;
+        setSync("Synced ✓");
+      }
       return true;
     });
   }
@@ -1548,20 +1589,31 @@
       // Re-read local state here, so edits made while the fetch was running
       // are included rather than dropped.
       var localFlat = flatten(snapshotOf());
-      var merged = res.data ? flatten(res.data) : {};
+      var remoteFlat = res.data ? flatten(res.data) : {};
+      var merged = {};
+      Object.keys(remoteFlat).forEach(function(p){ merged[p] = remoteFlat[p]; });
       var paths = Object.keys(base).concat(Object.keys(localFlat));
-      var changed = false;
       paths.forEach(function(p){
         if (localFlat[p] !== base[p]){
-          changed = true;
           if (p in localFlat) merged[p] = localFlat[p];
           else delete merged[p];
         }
       });
+      // Whether a PUT is actually needed is decided by comparing the merge
+      // result to what's really on GitHub right now (remoteFlat) — not by
+      // comparing local state to syncBase. syncBase can already include
+      // changes a previous pull merged in locally but never got written
+      // back (e.g. a reload happened before the push fired), so diffing
+      // against it here would wrongly conclude there's nothing to push.
+      var changed = false;
+      Object.keys(merged).concat(Object.keys(remoteFlat)).forEach(function(p){
+        if (merged[p] !== remoteFlat[p]) changed = true;
+      });
 
       if (!changed){
         syncSha = res.sha;
-        syncBase = flatten(res.data || { bought: [], leads: {}, removed: {}, custom: {} });
+        syncBase = merged;
+        persistSyncBase();
         if (res.data){ applySnapshot(res.data); refreshAll(); }
         setSync("Synced ✓");
         return;
@@ -1590,6 +1642,7 @@
         return r.json().then(function(j){
           syncSha = j.content.sha;
           syncBase = merged;
+          persistSyncBase();
           applySnapshot(newState);
           refreshAll();
           syncDirty = false;
