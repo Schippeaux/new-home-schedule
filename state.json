@@ -1,7 +1,10 @@
 {
   "bought": [
     "kitchen|Cleaning|bin liners",
-    "kitchen|Waste|kitchen bin"
+    "kitchen|Waste|kitchen bin",
+    "kitchen|Linen & Small Items|oven mitts",
+    "kitchen|Linen & Small Items|tea towels",
+    "kitchen|Linen & Small Items|dish cloths"
   ],
   "leads": {},
   "removed": {},
